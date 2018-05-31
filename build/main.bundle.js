@@ -146,6 +146,18 @@ var emoji = _interopRequireWildcard(_emoji);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+var PARCEL_ROWS = 5;
+/*
+ A simple js file.
+ Rendering is done with innerHTML.
+*/
+
+var PARCEL_COLS = 5;
+var PARCEL_CELLS = PARCEL_ROWS * PARCEL_COLS;
+var CELL_SIZE = 80;
+var PARCEL_WIDTH = PARCEL_ROWS * CELL_SIZE;
+var PARCEL_HEIGHT = PARCEL_ROWS * CELL_SIZE;
+
 /*
   __ __  __
  / _/ _|/ _|
@@ -154,12 +166,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 */
 
-var css = '\n\t* {\n\t\tbox-sizing: border-box;\n\t}\n\n\t#grid-container{\n\t\tposition:fixed;\n\t\twidth:calc(100% - 200px);\n\t\ttop:0;\n\t\tleft:0;\n\t\theight:100vh;\n\t\toverflow: auto;\n\t}\n\n\t#grid {\n\n\t}\n\n\t#grid .row {\n\t\tdisplay: flex;\n\t\tflex-direction:row;\n\t}\n\n\t#grid .row .px {\n\t\tfont-size: 1rem;\n\t\tbackground-color:lightgrey;\n\t\tcursor: crosshair;\n\t}\n\n\t#palette-container{\n\t\twidth:200px;\n\t\tposition:fixed;\n\t\ttop:0;\n\t\tbottom:0;\n\t\tright:0;\n\t\toverflow:auto;\n\t\tfont-size:1.5rem;\n\t\tborder-left: solid 1px darkgrey;\n\t\tbackground: #feffe8; /* Old browsers */\n\t\tbackground: -moz-linear-gradient(left, #feffe8 0%, #d6dbbf 100%); /* FF3.6-15 */\n\t\tbackground: -webkit-linear-gradient(left, #feffe8 0%,#d6dbbf 100%); /* Chrome10-25,Safari5.1-6 */\n\t\tbackground: linear-gradient(to right, #feffe8 0%,#d6dbbf 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */\n\t}\n\n\t#palette {\n\t\tpadding:1rem;\n\t\ttext-align:center;\n\t}\n\n\t#palette .title {\n\t\tcolor:black;\n\t\tfont-size:1.2rem;\n\t\tmargin:0;\n\t\tpadding:0;\n\t\tfont-family:verdana;\n\t\tmargin-bottom:1rem;\n\t}\n\n\t#palette div{\n\t\tdisplay:inline-block;\n\t\tfont-size: 1.8rem;\n\t\tcursor: pointer;\n\t\tpadding: 2px;\n\n\t}\n\n\t#palette div:hover{\n\t\tbackground-color:darkgrey;\n\t}\n\n\t\n';
-/*
- A simple js file.
- Rendering is done with innerHTML.
-*/
-
+var css = '\n\t* {\n\t\tbox-sizing: border-box;\n\t}\n\n\t#grid-container{\n\t\tposition:fixed;\n\t\twidth:calc(100% - 200px);\n\t\ttop:0;\n\t\tleft:0;\n\t\theight:100vh;\n\t\toverflow: hidden;\n\t}\n\n\t.grid-scrollable-content {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t}\n\n\t.grid {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t}\n\n\t.grid .row {\n\t\tdisplay: flex;\n\t\tflex-direction:row;\n\t}\n\n\t.grid .row .px {\n\t\tfont-size: ' + (CELL_SIZE - 2) + 'px;\n\t\tbackground-color:white;\n\t\tcursor: crosshair;\n\t\twidth: ' + CELL_SIZE + 'px;\n\t\theight: ' + CELL_SIZE + 'px;\n\n\t}\n\n\t#palette-container{\n\t\twidth:200px;\n\t\tposition:fixed;\n\t\ttop:0;\n\t\tbottom:0;\n\t\tright:0;\n\t\toverflow:auto;\n\t\tfont-size:1.5rem;\n\t\tborder-left: solid 1px darkgrey;\n\t\tbackground: #feffe8; /* Old browsers */\n\t\tbackground: -moz-linear-gradient(left, #feffe8 0%, #d6dbbf 100%); /* FF3.6-15 */\n\t\tbackground: -webkit-linear-gradient(left, #feffe8 0%,#d6dbbf 100%); /* Chrome10-25,Safari5.1-6 */\n\t\tbackground: linear-gradient(to right, #feffe8 0%,#d6dbbf 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */\n\t}\n\n\t#palette {\n\t\tpadding:1rem;\n\t\ttext-align:center;\n\t}\n\n\t#palette .title {\n\t\tcolor:black;\n\t\tfont-size:1.2rem;\n\t\tmargin:0;\n\t\tpadding:0;\n\t\tfont-family:verdana;\n\t\tmargin-bottom:1rem;\n\t}\n\n\t#palette div{\n\t\tdisplay:inline-block;\n\t\tfont-size: 32px;\n\t\tcursor: pointer;\n\t\tpadding: 2px;\n\n\t}\n\n\t#palette div:hover{\n\t\tbackground-color:darkgrey;\n\t}\n\n\t\n';
 
 function injectCss(css) {
 	var styleElem = document.createElement('style');
@@ -191,14 +198,14 @@ function renderPalette(emoji, container) {
 	container.innerHTML = markup;
 }
 
-function renderGrid(state) {
-	var rows = Array(100);
+function renderGrid(grid, container) {
+	var rows = Array(PARCEL_ROWS);
 	for (var i = 0; i < rows.length; i++) {
-		rows[i] = state.grid.slice(i, i + 100);
+		rows[i] = grid.slice(i, i + PARCEL_COLS);
 	}
 
 	var renderItem = function renderItem(item) {
-		return '<div class="px"> ' + (item || state.emojis[state.emptyIx]) + '  </div>';
+		return '<div class="px"> ' + (item || '☺️') + '  </div>';
 	};
 	var renderRow = function renderRow(rowitems) {
 		return '<div class="row">' + rowitems.map(function (item) {
@@ -206,13 +213,14 @@ function renderGrid(state) {
 		}).join('') + ' </div>';
 	};
 
-	var markup = '<div id="grid">\n\t\t' + rows.map(function (r) {
+	var markup = '\n\t\t' + rows.map(function (r) {
 		return renderRow(r);
-	}).join('') + '\n\t </div>';
+	}).join('') + '\n\t ';
 
 	var gridElem = document.createElement('div');
+	gridElem.classList.add('grid');
 	gridElem.innerHTML = markup;
-	document.querySelector('#grid-container').appendChild(gridElem);
+	container.appendChild(gridElem);
 }
 
 function setupEvents(events) {
@@ -229,6 +237,13 @@ function setupEvents(events) {
 			events.onPixelSelected(ev.target);
 		}
 	});
+
+	document.addEventListener('keyup', function (ev) {
+		var allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+		if (allowed.indexOf(ev.key) >= 0) {
+			events.onArrowPressed(ev.key);
+		}
+	});
 }
 
 function init(state) {
@@ -240,17 +255,72 @@ function init(state) {
 		},
 		onPixelSelected: function onPixelSelected(pixelElem) {
 			pixelElem.innerHTML = state.emojis[state.brushIx];
+		},
+		onArrowPressed: function onArrowPressed(key) {
+			switch (key) {
+				case "ArrowDown":
+					move({ y: 100 });
+					break;
+				case "ArrowLeft":
+					move({ x: -100 });
+
+					break;
+				case "ArrowRight":
+					move({ x: 100 });
+					break;
+				case "ArrowUp":
+					move({ y: -100 });
+					break;
+			}
 		}
 	});
-	renderGrid(state);
+	renderParcels(state.parcels);
+}
+
+function move(_ref) {
+	var _ref$x = _ref.x,
+	    x = _ref$x === undefined ? 0 : _ref$x,
+	    _ref$y = _ref.y,
+	    y = _ref$y === undefined ? 0 : _ref$y;
+
+	state.offset = { x: state.offset.x - x, y: state.offset.y - y };
+	var grid = document.querySelector('.grid-scrollable-content');
+	grid.style.transform = 'translate(' + state.offset.x + 'px, ' + state.offset.y + 'px)';
+}
+
+function renderParcels(parcels) {
+	parcels.forEach(function (parcel) {
+		renderParcel(parcel);
+	});
+}
+
+function renderParcel(parcel) {
+	//get parcel location based on lat,lon
+	var x = parcel.lat * PARCEL_WIDTH;
+	var y = parcel.lon * PARCEL_HEIGHT;
+	var parcelContainer = document.createElement('div');
+	parcelContainer.id = 'parcel-' + parcel.lat + '-' + parcel.lon;
+	parcelContainer.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+	var gridContainer = document.querySelector('.grid-scrollable-content');
+	gridContainer.appendChild(parcelContainer);
+	renderGrid(parcel.grid, parcelContainer);
 }
 
 // The management state library (patent pending)
 var state = {
 	emptyIx: 50,
-	grid: Array(100 * 100).fill('⬜️'),
+	parcels: [{
+		grid: Array(PARCEL_CELLS).fill(''),
+		lat: 0,
+		lon: 0
+	}, {
+		grid: Array(PARCEL_CELLS).fill(''),
+		lat: 1,
+		lon: 1
+	}],
 	emojis: getEmojiArray(emoji),
-	brushIx: 1
+	brushIx: 1,
+	offset: { x: 0, y: 0 }
 };
 
 init(state);

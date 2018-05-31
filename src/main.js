@@ -5,6 +5,12 @@
 */
 import * as emoji from './emoji';
 
+const PARCEL_ROWS = 5
+const PARCEL_COLS = 5
+const PARCEL_CELLS = PARCEL_ROWS * PARCEL_COLS
+const CELL_SIZE = 80
+const PARCEL_WIDTH = PARCEL_ROWS * CELL_SIZE
+const PARCEL_HEIGHT = PARCEL_ROWS * CELL_SIZE
 
 /*
   __ __  __
@@ -25,22 +31,33 @@ const css = `
 		top:0;
 		left:0;
 		height:100vh;
-		overflow: auto;
+		overflow: hidden;
 	}
 
-	#grid {
-
+	.grid-scrollable-content {
+		position: absolute;
+		top: 0;
+		left: 0;
 	}
 
-	#grid .row {
+	.grid {
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	.grid .row {
 		display: flex;
 		flex-direction:row;
 	}
 
-	#grid .row .px {
-		font-size: 1rem;
-		background-color:lightgrey;
+	.grid .row .px {
+		font-size: ${CELL_SIZE-2}px;
+		background-color:white;
 		cursor: crosshair;
+		width: ${CELL_SIZE}px;
+		height: ${CELL_SIZE}px;
+
 	}
 
 	#palette-container{
@@ -74,7 +91,7 @@ const css = `
 
 	#palette div{
 		display:inline-block;
-		font-size: 1.8rem;
+		font-size: 32px;
 		cursor: pointer;
 		padding: 2px;
 
@@ -129,23 +146,24 @@ function renderPalette(emoji, container) {
 
 }
 
-function renderGrid(state) {
-	const rows = Array(100)
+function renderGrid(grid, container) {
+	const rows = Array(PARCEL_ROWS)
 	for (var i = 0; i < rows.length; i++) {
-		rows[i] = state.grid.slice(i, i+100)
+		rows[i] = grid.slice(i, i+PARCEL_COLS)
 	}
 
 
-	let renderItem = item => `<div class="px"> ${item || state.emojis[state.emptyIx]}  </div>`
+	let renderItem = item => `<div class="px"> ${item || '☺️'}  </div>`
 	let renderRow = rowitems => `<div class="row">${rowitems.map(item=>renderItem(item)).join('')} </div>`
 
-	const markup =  `<div id="grid">
+	const markup =  `
 		${rows.map(r=>renderRow(r)).join('')}
-	 </div>`
+	 `
 
 	let gridElem = document.createElement('div');
+	gridElem.classList.add('grid')
 	gridElem.innerHTML = markup;
-	document.querySelector('#grid-container').appendChild(gridElem);
+	container.appendChild(gridElem);
 
 }
 
@@ -163,6 +181,13 @@ function setupEvents(events) {
 			events.onPixelSelected(ev.target);
 		}
 	})
+
+	document.addEventListener('keyup', (ev)=>{
+		const allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
+		if(allowed.indexOf(ev.key) >= 0 ) {
+			events.onArrowPressed(ev.key)
+		}
+	})
 }
 
 
@@ -175,20 +200,75 @@ function init(state) {
 		},
 		onPixelSelected: (pixelElem) => {
 			pixelElem.innerHTML = state.emojis[state.brushIx]
+		},
+		onArrowPressed: (key) => {
+			switch(key) {
+				case "ArrowDown":
+					move({y:100});
+					break;
+				case "ArrowLeft":
+					move({x:-100});
+					
+					break;
+				case "ArrowRight":
+					move({x:100});
+					break;
+				case "ArrowUp":
+					move({y:-100});
+					break;
+			}
 		}
 	})
-	renderGrid(state);
+	renderParcels(state.parcels);
 }
 
+
+function move({x=0, y=0}) {
+	state.offset = {x:state.offset.x - x, y:state.offset.y - y}
+	const grid = document.querySelector('.grid-scrollable-content')
+	grid.style.transform = `translate(${state.offset.x}px, ${state.offset.y}px)`
+}
+
+
+function renderParcels(parcels) {
+	parcels.forEach((parcel)=>{
+		renderParcel(parcel);
+	})
+}
+
+function renderParcel(parcel) {
+	//get parcel location based on lat,lon
+	let x = parcel.lat * PARCEL_WIDTH
+	let y = parcel.lon * PARCEL_HEIGHT
+	const parcelContainer = document.createElement('div');
+	parcelContainer.id = 'parcel-'+parcel.lat+'-'+parcel.lon
+	parcelContainer.style.transform = `translate(${x}px, ${y}px)`
+	const gridContainer = document.querySelector('.grid-scrollable-content')
+	gridContainer.appendChild(parcelContainer)
+	renderGrid(parcel.grid, parcelContainer )
+
+}
 
 
 
 // The management state library (patent pending)
 const state = {
 	emptyIx: 50,
-	grid: Array(100*100).fill('⬜️'),
+	parcels: [
+		{
+			grid: Array(PARCEL_CELLS).fill(''),
+			lat: 0,
+			lon: 0
+		},
+		{
+			grid: Array(PARCEL_CELLS).fill(''),
+			lat: 1,
+			lon: 1
+		}
+	],
 	emojis:  getEmojiArray(emoji),
-	brushIx: 1
+	brushIx: 1,
+	offset: {x:0, y:0}
 }
 
 init(state);
