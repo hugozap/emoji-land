@@ -38,6 +38,7 @@ const css = `
 		position: absolute;
 		top: 0;
 		left: 0;
+		transition: transform 0.3s;
 	}
 
 	.grid {
@@ -220,13 +221,22 @@ function init(state) {
 		}
 	})
 	renderParcels(state.parcels);
+	setCurrentParcel(state.parcels[0])
 }
 
 
+//TODO: remove state modifications
 function move({x=0, y=0}) {
-	state.offset = {x:state.offset.x - x, y:state.offset.y - y}
+	state.offset = {x:state.offset.x + x, y:state.offset.y + y}
 	const grid = document.querySelector('.grid-scrollable-content')
-	grid.style.transform = `translate(${state.offset.x}px, ${state.offset.y}px)`
+	grid.style.transform = `translate(${-state.offset.x}px, ${-state.offset.y}px)`
+	const p = getCurrentParcel(state.offset)
+	const equal = p.lat == state.currentParcel.lat &&
+		p.lon == state.currentParcel.lon
+	if(!equal) {
+		console.log('parcel changed!')
+		setCurrentParcel(p);
+	}
 }
 
 
@@ -234,6 +244,16 @@ function renderParcels(parcels) {
 	parcels.forEach((parcel)=>{
 		renderParcel(parcel);
 	})
+}
+
+
+// Returns the current parcel
+// Returns {lat,lon}
+function getCurrentParcel(offset) {
+	console.log('offset', offset)
+	const lat = Math.floor(offset.x / PARCEL_WIDTH)
+	const lon = Math.floor(offset.y / PARCEL_HEIGHT)
+	return {lat,lon}
 }
 
 function renderParcel(parcel) {
@@ -251,20 +271,87 @@ function renderParcel(parcel) {
 
 
 
+function setCurrentParcel(p) {
+	state.currentParcel = p;
+	//TODO: remove old parcels
+	const surrParcelLocs = getSurroundingParcels(p)
+
+	removeHiddenParcelsFromPage([p, ...surrParcelLocs])
+
+	//Create parcel objects 
+	surrParcelLocs.forEach((p)=>{
+		console.log('processing', p)
+		if(!parcelPresent(p)) {
+			let parcel = createParcel(p)
+			state.parcels.push(createParcel(parcel));
+			renderParcel(parcel);
+		}
+	})
+
+
+}
+
+//Remove parcels from page and state
+function removeHiddenParcelsFromPage(focusedParcels) {
+	const focusedParcelIds = focusedParcels.map(p => p.id)
+	const hiddenParcels = state.parcels.filter((p)=>{
+		return focusedParcelIds.indexOf(p.id) < 0;
+	})
+	//remove from dom
+	hiddenParcels.forEach((hp)=>{
+		//TODO: remove listeners
+		let elem = document.querySelector('#parcel-'+hp.lat+'-'+hp.lon)
+		elem && elem.remove();
+		console.log('removing unused parcel', hp);
+	})
+
+
+}
+
+
+//TODO: replace this when parcels is a map
+//TODO: use a map for parcels
+function parcelPresent(parcel) {
+	return state.parcels.find((p)=>{
+		return p.lat === parcel.lat && p.lon === parcel.lon
+	}) != null
+}
+
+function createParcel({lat, lon}) {
+	return {
+		id: lat+'-'+lon,
+		lat,
+		lon,
+		grid: Array(PARCEL_CELLS).fill(''),
+
+	}
+}
+
+//Receives the parcel location {lat,lon}
+//Returns the location of the surroundinga parcels
+function getSurroundingParcels(p) {
+	return [
+		{lat:p.lat+1, lon:p.lon},
+		{lat:p.lat+1, lon:p.lon+1},
+		{lat:p.lat+1, lon:p.lon-1},
+		{lat:p.lat-1, lon:p.lon},
+		{lat:p.lat-1, lon:p.lon+1},
+		{lat:p.lat-1, lon:p.lon-1},
+		{lat:p.lat, lon:p.lon+1},
+		{lat:p.lat, lon:p.lon-1},
+	].map((item)=>{
+		//set the id
+		return Object.assign({},item, {id:item.lat+'-'+item.lon})
+	})
+}
+
+
 // The management state library (patent pending)
 const state = {
 	emptyIx: 50,
+	currentParcel: {lat:0, lon:0},
 	parcels: [
-		{
-			grid: Array(PARCEL_CELLS).fill(''),
-			lat: 0,
-			lon: 0
-		},
-		{
-			grid: Array(PARCEL_CELLS).fill(''),
-			lat: 1,
-			lon: 1
-		}
+		createParcel({lat:0, lon:0})
 	],
 	emojis:  getEmojiArray(emoji),
 	brushIx: 1,

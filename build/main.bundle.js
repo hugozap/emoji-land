@@ -146,12 +146,14 @@ var emoji = _interopRequireWildcard(_emoji);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var PARCEL_ROWS = 5;
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 /*
  A simple js file.
  Rendering is done with innerHTML.
 */
 
+
+var PARCEL_ROWS = 5;
 var PARCEL_COLS = 5;
 var PARCEL_CELLS = PARCEL_ROWS * PARCEL_COLS;
 var CELL_SIZE = 80;
@@ -166,7 +168,7 @@ var PARCEL_HEIGHT = PARCEL_ROWS * CELL_SIZE;
 
 */
 
-var css = '\n\t* {\n\t\tbox-sizing: border-box;\n\t}\n\n\t#grid-container{\n\t\tposition:fixed;\n\t\twidth:calc(100% - 200px);\n\t\ttop:0;\n\t\tleft:0;\n\t\theight:100vh;\n\t\toverflow: hidden;\n\t}\n\n\t.grid-scrollable-content {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t}\n\n\t.grid {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t}\n\n\t.grid .row {\n\t\tdisplay: flex;\n\t\tflex-direction:row;\n\t}\n\n\t.grid .row .px {\n\t\tfont-size: ' + (CELL_SIZE - 2) + 'px;\n\t\tbackground-color:white;\n\t\tcursor: crosshair;\n\t\twidth: ' + CELL_SIZE + 'px;\n\t\theight: ' + CELL_SIZE + 'px;\n\n\t}\n\n\t#palette-container{\n\t\twidth:200px;\n\t\tposition:fixed;\n\t\ttop:0;\n\t\tbottom:0;\n\t\tright:0;\n\t\toverflow:auto;\n\t\tfont-size:1.5rem;\n\t\tborder-left: solid 1px darkgrey;\n\t\tbackground: #feffe8; /* Old browsers */\n\t\tbackground: -moz-linear-gradient(left, #feffe8 0%, #d6dbbf 100%); /* FF3.6-15 */\n\t\tbackground: -webkit-linear-gradient(left, #feffe8 0%,#d6dbbf 100%); /* Chrome10-25,Safari5.1-6 */\n\t\tbackground: linear-gradient(to right, #feffe8 0%,#d6dbbf 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */\n\t}\n\n\t#palette {\n\t\tpadding:1rem;\n\t\ttext-align:center;\n\t}\n\n\t#palette .title {\n\t\tcolor:black;\n\t\tfont-size:1.2rem;\n\t\tmargin:0;\n\t\tpadding:0;\n\t\tfont-family:verdana;\n\t\tmargin-bottom:1rem;\n\t}\n\n\t#palette div{\n\t\tdisplay:inline-block;\n\t\tfont-size: 32px;\n\t\tcursor: pointer;\n\t\tpadding: 2px;\n\n\t}\n\n\t#palette div:hover{\n\t\tbackground-color:darkgrey;\n\t}\n\n\t\n';
+var css = '\n\t* {\n\t\tbox-sizing: border-box;\n\t}\n\n\t#grid-container{\n\t\tposition:fixed;\n\t\twidth:calc(100% - 200px);\n\t\ttop:0;\n\t\tleft:0;\n\t\theight:100vh;\n\t\toverflow: hidden;\n\t}\n\n\t.grid-scrollable-content {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t\ttransition: transform 0.3s;\n\t}\n\n\t.grid {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t}\n\n\t.grid .row {\n\t\tdisplay: flex;\n\t\tflex-direction:row;\n\t}\n\n\t.grid .row .px {\n\t\tfont-size: ' + (CELL_SIZE - 2) + 'px;\n\t\tbackground-color:white;\n\t\tcursor: crosshair;\n\t\twidth: ' + CELL_SIZE + 'px;\n\t\theight: ' + CELL_SIZE + 'px;\n\n\t}\n\n\t#palette-container{\n\t\twidth:200px;\n\t\tposition:fixed;\n\t\ttop:0;\n\t\tbottom:0;\n\t\tright:0;\n\t\toverflow:auto;\n\t\tfont-size:1.5rem;\n\t\tborder-left: solid 1px darkgrey;\n\t\tbackground: #feffe8; /* Old browsers */\n\t\tbackground: -moz-linear-gradient(left, #feffe8 0%, #d6dbbf 100%); /* FF3.6-15 */\n\t\tbackground: -webkit-linear-gradient(left, #feffe8 0%,#d6dbbf 100%); /* Chrome10-25,Safari5.1-6 */\n\t\tbackground: linear-gradient(to right, #feffe8 0%,#d6dbbf 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */\n\t}\n\n\t#palette {\n\t\tpadding:1rem;\n\t\ttext-align:center;\n\t}\n\n\t#palette .title {\n\t\tcolor:black;\n\t\tfont-size:1.2rem;\n\t\tmargin:0;\n\t\tpadding:0;\n\t\tfont-family:verdana;\n\t\tmargin-bottom:1rem;\n\t}\n\n\t#palette div{\n\t\tdisplay:inline-block;\n\t\tfont-size: 32px;\n\t\tcursor: pointer;\n\t\tpadding: 2px;\n\n\t}\n\n\t#palette div:hover{\n\t\tbackground-color:darkgrey;\n\t}\n\n\t\n';
 
 function injectCss(css) {
 	var styleElem = document.createElement('style');
@@ -275,23 +277,40 @@ function init(state) {
 		}
 	});
 	renderParcels(state.parcels);
+	setCurrentParcel(state.parcels[0]);
 }
 
+//TODO: remove state modifications
 function move(_ref) {
 	var _ref$x = _ref.x,
 	    x = _ref$x === undefined ? 0 : _ref$x,
 	    _ref$y = _ref.y,
 	    y = _ref$y === undefined ? 0 : _ref$y;
 
-	state.offset = { x: state.offset.x - x, y: state.offset.y - y };
+	state.offset = { x: state.offset.x + x, y: state.offset.y + y };
 	var grid = document.querySelector('.grid-scrollable-content');
-	grid.style.transform = 'translate(' + state.offset.x + 'px, ' + state.offset.y + 'px)';
+	grid.style.transform = 'translate(' + -state.offset.x + 'px, ' + -state.offset.y + 'px)';
+	var p = getCurrentParcel(state.offset);
+	var equal = p.lat == state.currentParcel.lat && p.lon == state.currentParcel.lon;
+	if (!equal) {
+		console.log('parcel changed!');
+		setCurrentParcel(p);
+	}
 }
 
 function renderParcels(parcels) {
 	parcels.forEach(function (parcel) {
 		renderParcel(parcel);
 	});
+}
+
+// Returns the current parcel
+// Returns {lat,lon}
+function getCurrentParcel(offset) {
+	console.log('offset', offset);
+	var lat = Math.floor(offset.x / PARCEL_WIDTH);
+	var lon = Math.floor(offset.y / PARCEL_HEIGHT);
+	return { lat: lat, lon: lon };
 }
 
 function renderParcel(parcel) {
@@ -306,18 +325,76 @@ function renderParcel(parcel) {
 	renderGrid(parcel.grid, parcelContainer);
 }
 
+function setCurrentParcel(p) {
+	state.currentParcel = p;
+	//TODO: remove old parcels
+	var surrParcelLocs = getSurroundingParcels(p);
+
+	removeHiddenParcelsFromPage([p].concat(_toConsumableArray(surrParcelLocs)));
+
+	//Create parcel objects 
+	surrParcelLocs.forEach(function (p) {
+		console.log('processing', p);
+		if (!parcelPresent(p)) {
+			var parcel = createParcel(p);
+			state.parcels.push(createParcel(parcel));
+			renderParcel(parcel);
+		}
+	});
+}
+
+//Remove parcels from page and state
+function removeHiddenParcelsFromPage(focusedParcels) {
+	var focusedParcelIds = focusedParcels.map(function (p) {
+		return p.id;
+	});
+	var hiddenParcels = state.parcels.filter(function (p) {
+		return focusedParcelIds.indexOf(p.id) < 0;
+	});
+	//remove from dom
+	hiddenParcels.forEach(function (hp) {
+		//TODO: remove listeners
+		var elem = document.querySelector('#parcel-' + hp.lat + '-' + hp.lon);
+		elem && elem.remove();
+		console.log('removing unused parcel', hp);
+	});
+}
+
+//TODO: replace this when parcels is a map
+//TODO: use a map for parcels
+function parcelPresent(parcel) {
+	return state.parcels.find(function (p) {
+		return p.lat === parcel.lat && p.lon === parcel.lon;
+	}) != null;
+}
+
+function createParcel(_ref2) {
+	var lat = _ref2.lat,
+	    lon = _ref2.lon;
+
+	return {
+		id: lat + '-' + lon,
+		lat: lat,
+		lon: lon,
+		grid: Array(PARCEL_CELLS).fill('')
+
+	};
+}
+
+//Receives the parcel location {lat,lon}
+//Returns the location of the surroundinga parcels
+function getSurroundingParcels(p) {
+	return [{ lat: p.lat + 1, lon: p.lon }, { lat: p.lat + 1, lon: p.lon + 1 }, { lat: p.lat + 1, lon: p.lon - 1 }, { lat: p.lat - 1, lon: p.lon }, { lat: p.lat - 1, lon: p.lon + 1 }, { lat: p.lat - 1, lon: p.lon - 1 }, { lat: p.lat, lon: p.lon + 1 }, { lat: p.lat, lon: p.lon - 1 }].map(function (item) {
+		//set the id
+		return Object.assign({}, item, { id: item.lat + '-' + item.lon });
+	});
+}
+
 // The management state library (patent pending)
 var state = {
 	emptyIx: 50,
-	parcels: [{
-		grid: Array(PARCEL_CELLS).fill(''),
-		lat: 0,
-		lon: 0
-	}, {
-		grid: Array(PARCEL_CELLS).fill(''),
-		lat: 1,
-		lon: 1
-	}],
+	currentParcel: { lat: 0, lon: 0 },
+	parcels: [createParcel({ lat: 0, lon: 0 })],
 	emojis: getEmojiArray(emoji),
 	brushIx: 1,
 	offset: { x: 0, y: 0 }
