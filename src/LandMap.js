@@ -2,11 +2,16 @@
   Componente LandMap encargado de mostrar las parcelas 
   y la navegación entre ellas
 
+  Las parcelas se representan en un objeto así:
+  ABC
+  DEF
+  GHI
+
+  Cuando hay movimientos se calcula lat,lon para cada
+  una de las posiciones del objeto.
+
 */
 
-//Numero de parcelas a mostrar
-//La del medio es la activa
-const ACTIVE_PARCELS = 9
 
 //immutable point structure
 class Point {
@@ -91,4 +96,5 @@ class LandMap {
 	}
 }
 
+export {REF_MAP};
 export default LandMap;

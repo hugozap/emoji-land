@@ -86,10 +86,437 @@
 /************************************************************************/
 /******/ ({
 
-/***/ "./src/emoji.js":
-/*!**********************!*\
-  !*** ./src/emoji.js ***!
-  \**********************/
+/***/ "./node_modules/events/events.js":
+/*!***************************************!*\
+  !*** ./node_modules/events/events.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var R = (typeof Reflect === 'undefined' ? 'undefined' : _typeof(Reflect)) === 'object' ? Reflect : null;
+var ReflectApply = R && typeof R.apply === 'function' ? R.apply : function ReflectApply(target, receiver, args) {
+  return Function.prototype.apply.call(target, receiver, args);
+};
+
+var ReflectOwnKeys;
+if (R && typeof R.ownKeys === 'function') {
+  ReflectOwnKeys = R.ownKeys;
+} else if (Object.getOwnPropertySymbols) {
+  ReflectOwnKeys = function ReflectOwnKeys(target) {
+    return Object.getOwnPropertyNames(target).concat(Object.getOwnPropertySymbols(target));
+  };
+} else {
+  ReflectOwnKeys = function ReflectOwnKeys(target) {
+    return Object.getOwnPropertyNames(target);
+  };
+}
+
+function ProcessEmitWarning(warning) {
+  if (console && console.warn) console.warn(warning);
+}
+
+var NumberIsNaN = Number.isNaN || function NumberIsNaN(value) {
+  return value !== value;
+};
+
+function EventEmitter() {
+  EventEmitter.init.call(this);
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._eventsCount = 0;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+var defaultMaxListeners = 10;
+
+Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
+  enumerable: true,
+  get: function get() {
+    return defaultMaxListeners;
+  },
+  set: function set(arg) {
+    if (typeof arg !== 'number' || arg < 0 || NumberIsNaN(arg)) {
+      throw new RangeError('The value of "defaultMaxListeners" is out of range. It must be a non-negative number. Received ' + arg + '.');
+    }
+    defaultMaxListeners = arg;
+  }
+});
+
+EventEmitter.init = function () {
+
+  if (this._events === undefined || this._events === Object.getPrototypeOf(this)._events) {
+    this._events = Object.create(null);
+    this._eventsCount = 0;
+  }
+
+  this._maxListeners = this._maxListeners || undefined;
+};
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
+  if (typeof n !== 'number' || n < 0 || NumberIsNaN(n)) {
+    throw new RangeError('The value of "n" is out of range. It must be a non-negative number. Received ' + n + '.');
+  }
+  this._maxListeners = n;
+  return this;
+};
+
+function $getMaxListeners(that) {
+  if (that._maxListeners === undefined) return EventEmitter.defaultMaxListeners;
+  return that._maxListeners;
+}
+
+EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
+  return $getMaxListeners(this);
+};
+
+EventEmitter.prototype.emit = function emit(type) {
+  var args = [];
+  for (var i = 1; i < arguments.length; i++) {
+    args.push(arguments[i]);
+  }var doError = type === 'error';
+
+  var events = this._events;
+  if (events !== undefined) doError = doError && events.error === undefined;else if (!doError) return false;
+
+  // If there is no 'error' event listener then throw.
+  if (doError) {
+    var er;
+    if (args.length > 0) er = args[0];
+    if (er instanceof Error) {
+      // Note: The comments on the `throw` lines are intentional, they show
+      // up in Node's output if this results in an unhandled exception.
+      throw er; // Unhandled 'error' event
+    }
+    // At least give some kind of context to the user
+    var err = new Error('Unhandled error.' + (er ? ' (' + er.message + ')' : ''));
+    err.context = er;
+    throw err; // Unhandled 'error' event
+  }
+
+  var handler = events[type];
+
+  if (handler === undefined) return false;
+
+  if (typeof handler === 'function') {
+    ReflectApply(handler, this, args);
+  } else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i) {
+      ReflectApply(listeners[i], this, args);
+    }
+  }
+
+  return true;
+};
+
+function _addListener(target, type, listener, prepend) {
+  var m;
+  var events;
+  var existing;
+
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + (typeof listener === 'undefined' ? 'undefined' : _typeof(listener)));
+  }
+
+  events = target._events;
+  if (events === undefined) {
+    events = target._events = Object.create(null);
+    target._eventsCount = 0;
+  } else {
+    // To avoid recursion in the case that type === "newListener"! Before
+    // adding it to the listeners, first emit "newListener".
+    if (events.newListener !== undefined) {
+      target.emit('newListener', type, listener.listener ? listener.listener : listener);
+
+      // Re-assign `events` because a newListener handler could have caused the
+      // this._events to be assigned to a new object
+      events = target._events;
+    }
+    existing = events[type];
+  }
+
+  if (existing === undefined) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    existing = events[type] = listener;
+    ++target._eventsCount;
+  } else {
+    if (typeof existing === 'function') {
+      // Adding the second element, need to change to array.
+      existing = events[type] = prepend ? [listener, existing] : [existing, listener];
+      // If we've already got an array, just append.
+    } else if (prepend) {
+      existing.unshift(listener);
+    } else {
+      existing.push(listener);
+    }
+
+    // Check for listener leak
+    m = $getMaxListeners(target);
+    if (m > 0 && existing.length > m && !existing.warned) {
+      existing.warned = true;
+      // No error code for this since it is a Warning
+      // eslint-disable-next-line no-restricted-syntax
+      var w = new Error('Possible EventEmitter memory leak detected. ' + existing.length + ' ' + String(type) + ' listeners ' + 'added. Use emitter.setMaxListeners() to ' + 'increase limit');
+      w.name = 'MaxListenersExceededWarning';
+      w.emitter = target;
+      w.type = type;
+      w.count = existing.length;
+      ProcessEmitWarning(w);
+    }
+  }
+
+  return target;
+}
+
+EventEmitter.prototype.addListener = function addListener(type, listener) {
+  return _addListener(this, type, listener, false);
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.prependListener = function prependListener(type, listener) {
+  return _addListener(this, type, listener, true);
+};
+
+function onceWrapper() {
+  var args = [];
+  for (var i = 0; i < arguments.length; i++) {
+    args.push(arguments[i]);
+  }if (!this.fired) {
+    this.target.removeListener(this.type, this.wrapFn);
+    this.fired = true;
+    ReflectApply(this.listener, this.target, args);
+  }
+}
+
+function _onceWrap(target, type, listener) {
+  var state = { fired: false, wrapFn: undefined, target: target, type: type, listener: listener };
+  var wrapped = onceWrapper.bind(state);
+  wrapped.listener = listener;
+  state.wrapFn = wrapped;
+  return wrapped;
+}
+
+EventEmitter.prototype.once = function once(type, listener) {
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + (typeof listener === 'undefined' ? 'undefined' : _typeof(listener)));
+  }
+  this.on(type, _onceWrap(this, type, listener));
+  return this;
+};
+
+EventEmitter.prototype.prependOnceListener = function prependOnceListener(type, listener) {
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + (typeof listener === 'undefined' ? 'undefined' : _typeof(listener)));
+  }
+  this.prependListener(type, _onceWrap(this, type, listener));
+  return this;
+};
+
+// Emits a 'removeListener' event if and only if the listener was removed.
+EventEmitter.prototype.removeListener = function removeListener(type, listener) {
+  var list, events, position, i, originalListener;
+
+  if (typeof listener !== 'function') {
+    throw new TypeError('The "listener" argument must be of type Function. Received type ' + (typeof listener === 'undefined' ? 'undefined' : _typeof(listener)));
+  }
+
+  events = this._events;
+  if (events === undefined) return this;
+
+  list = events[type];
+  if (list === undefined) return this;
+
+  if (list === listener || list.listener === listener) {
+    if (--this._eventsCount === 0) this._events = Object.create(null);else {
+      delete events[type];
+      if (events.removeListener) this.emit('removeListener', type, list.listener || listener);
+    }
+  } else if (typeof list !== 'function') {
+    position = -1;
+
+    for (i = list.length - 1; i >= 0; i--) {
+      if (list[i] === listener || list[i].listener === listener) {
+        originalListener = list[i].listener;
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0) return this;
+
+    if (position === 0) list.shift();else {
+      spliceOne(list, position);
+    }
+
+    if (list.length === 1) events[type] = list[0];
+
+    if (events.removeListener !== undefined) this.emit('removeListener', type, originalListener || listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
+
+EventEmitter.prototype.removeAllListeners = function removeAllListeners(type) {
+  var listeners, events, i;
+
+  events = this._events;
+  if (events === undefined) return this;
+
+  // not listening for removeListener, no need to emit
+  if (events.removeListener === undefined) {
+    if (arguments.length === 0) {
+      this._events = Object.create(null);
+      this._eventsCount = 0;
+    } else if (events[type] !== undefined) {
+      if (--this._eventsCount === 0) this._events = Object.create(null);else delete events[type];
+    }
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    var keys = Object.keys(events);
+    var key;
+    for (i = 0; i < keys.length; ++i) {
+      key = keys[i];
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = Object.create(null);
+    this._eventsCount = 0;
+    return this;
+  }
+
+  listeners = events[type];
+
+  if (typeof listeners === 'function') {
+    this.removeListener(type, listeners);
+  } else if (listeners !== undefined) {
+    // LIFO order
+    for (i = listeners.length - 1; i >= 0; i--) {
+      this.removeListener(type, listeners[i]);
+    }
+  }
+
+  return this;
+};
+
+function _listeners(target, type, unwrap) {
+  var events = target._events;
+
+  if (events === undefined) return [];
+
+  var evlistener = events[type];
+  if (evlistener === undefined) return [];
+
+  if (typeof evlistener === 'function') return unwrap ? [evlistener.listener || evlistener] : [evlistener];
+
+  return unwrap ? unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
+}
+
+EventEmitter.prototype.listeners = function listeners(type) {
+  return _listeners(this, type, true);
+};
+
+EventEmitter.prototype.rawListeners = function rawListeners(type) {
+  return _listeners(this, type, false);
+};
+
+EventEmitter.listenerCount = function (emitter, type) {
+  if (typeof emitter.listenerCount === 'function') {
+    return emitter.listenerCount(type);
+  } else {
+    return listenerCount.call(emitter, type);
+  }
+};
+
+EventEmitter.prototype.listenerCount = listenerCount;
+function listenerCount(type) {
+  var events = this._events;
+
+  if (events !== undefined) {
+    var evlistener = events[type];
+
+    if (typeof evlistener === 'function') {
+      return 1;
+    } else if (evlistener !== undefined) {
+      return evlistener.length;
+    }
+  }
+
+  return 0;
+}
+
+EventEmitter.prototype.eventNames = function eventNames() {
+  return this._eventsCount > 0 ? ReflectOwnKeys(this._events) : [];
+};
+
+function arrayClone(arr, n) {
+  var copy = new Array(n);
+  for (var i = 0; i < n; ++i) {
+    copy[i] = arr[i];
+  }return copy;
+}
+
+function spliceOne(list, index) {
+  for (; index + 1 < list.length; index++) {
+    list[index] = list[index + 1];
+  }list.pop();
+}
+
+function unwrapListeners(arr) {
+  var ret = new Array(arr.length);
+  for (var i = 0; i < ret.length; ++i) {
+    ret[i] = arr[i].listener || arr[i];
+  }
+  return ret;
+}
+
+/***/ }),
+
+/***/ "./src/LandMap.js":
+/*!************************!*\
+  !*** ./src/LandMap.js ***!
+  \************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -97,36 +524,374 @@
 
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+	value: true
 });
-var smileys = exports.smileys = "\uD83D\uDE00 \uD83D\uDE01 \uD83D\uDE02 \uD83E\uDD23 \uD83D\uDE03 \uD83D\uDE04 \uD83D\uDE05 \uD83D\uDE06 \uD83D\uDE09 \uD83D\uDE0A \uD83D\uDE0B \uD83D\uDE0E \uD83D\uDE0D \uD83D\uDE18 \uD83D\uDE17 \uD83D\uDE19 \uD83D\uDE1A \u263A\uFE0F \uD83D\uDE42 \uD83E\uDD17 \uD83E\uDD29 \uD83E\uDD14 \uD83E\uDD28 \uD83D\uDE10 \uD83D\uDE11 \uD83D\uDE36 \uD83D\uDE44 \uD83D\uDE0F \uD83D\uDE23 \uD83D\uDE25 \uD83D\uDE2E \uD83E\uDD10 \uD83D\uDE2F \uD83D\uDE2A \uD83D\uDE2B \uD83D\uDE34 \uD83D\uDE0C \uD83D\uDE1B \uD83D\uDE1C \uD83D\uDE1D \uD83E\uDD24 \uD83D\uDE12 \uD83D\uDE13 \uD83D\uDE14 \uD83D\uDE15 \uD83D\uDE43 \uD83E\uDD11 \uD83D\uDE32 \u2639\uFE0F \uD83D\uDE41 \uD83D\uDE16 \uD83D\uDE1E \uD83D\uDE1F \uD83D\uDE24 \uD83D\uDE22 \uD83D\uDE2D \uD83D\uDE26 \uD83D\uDE27 \uD83D\uDE28 \uD83D\uDE29 \uD83E\uDD2F \uD83D\uDE2C \uD83D\uDE30 \uD83D\uDE31 \uD83D\uDE33 \uD83E\uDD2A \uD83D\uDE35 \uD83D\uDE21 \uD83D\uDE20 \uD83E\uDD2C \uD83D\uDE37 \uD83E\uDD12 \uD83E\uDD15 \uD83E\uDD22 \uD83E\uDD2E \uD83E\uDD27 \uD83D\uDE07 \uD83E\uDD20 \uD83E\uDD21 \uD83E\uDD25 \uD83E\uDD2B \uD83E\uDD2D \uD83E\uDDD0 \uD83E\uDD13 \uD83D\uDE08 \uD83D\uDC7F \uD83D\uDC79 \uD83D\uDC7A \uD83D\uDC80 \uD83D\uDC7B \uD83D\uDC7D \uD83E\uDD16 \uD83D\uDCA9 \uD83D\uDE3A \uD83D\uDE38 \uD83D\uDE39 \uD83D\uDE3B \uD83D\uDE3C \uD83D\uDE3D \uD83D\uDE40 \uD83D\uDE3F \uD83D\uDE3E\n";
-var people = exports.people = "\uD83D\uDC76 \uD83D\uDC67 \uD83E\uDDD2 \uD83D\uDC66 \uD83D\uDC69 \uD83E\uDDD1 \uD83D\uDC68 \uD83D\uDC75 \uD83E\uDDD3 \uD83D\uDC74 \uD83D\uDC72 \uD83D\uDC73\u200D\u2640\uFE0F \uD83D\uDC73\u200D\u2642\uFE0F \uD83E\uDDD5 \uD83D\uDC6E\u200D\u2640\uFE0F \uD83D\uDC6E\u200D\u2642\uFE0F \uD83D\uDC77\u200D\u2640\uFE0F \uD83D\uDC77\u200D\u2642\uFE0F \uD83D\uDC82\u200D\u2640\uFE0F \uD83D\uDC82\u200D\u2642\uFE0F \uD83D\uDD75\uFE0F\u200D\u2640\uFE0F \uD83D\uDD75\uFE0F\u200D\u2642\uFE0F \uD83D\uDC69\u200D\u2695\uFE0F \uD83D\uDC68\u200D\u2695\uFE0F \uD83D\uDC69\u200D\uD83C\uDF3E \uD83D\uDC68\u200D\uD83C\uDF3E \uD83D\uDC69\u200D\uD83C\uDF73 \uD83D\uDC68\u200D\uD83C\uDF73 \uD83D\uDC69\u200D\uD83C\uDF93 \uD83D\uDC68\u200D\uD83C\uDF93 \uD83D\uDC69\u200D\uD83C\uDFA4 \uD83D\uDC68\u200D\uD83C\uDFA4 \uD83D\uDC69\u200D\uD83C\uDFEB \uD83D\uDC68\u200D\uD83C\uDFEB \uD83D\uDC69\u200D\uD83C\uDFED \uD83D\uDC68\u200D\uD83C\uDFED \uD83D\uDC69\u200D\uD83D\uDCBB \uD83D\uDC68\u200D\uD83D\uDCBB \uD83D\uDC69\u200D\uD83D\uDCBC \uD83D\uDC68\u200D\uD83D\uDCBC \uD83D\uDC69\u200D\uD83D\uDD27 \uD83D\uDC68\u200D\uD83D\uDD27 \uD83D\uDC69\u200D\uD83D\uDD2C \uD83D\uDC68\u200D\uD83D\uDD2C \uD83D\uDC69\u200D\uD83C\uDFA8 \uD83D\uDC68\u200D\uD83C\uDFA8 \uD83D\uDC69\u200D\uD83D\uDE92 \uD83D\uDC68\u200D\uD83D\uDE92 \uD83D\uDC69\u200D\u2708\uFE0F \uD83D\uDC68\u200D\u2708\uFE0F \uD83D\uDC69\u200D\uD83D\uDE80 \uD83D\uDC68\u200D\uD83D\uDE80 \uD83D\uDC69\u200D\u2696\uFE0F \uD83D\uDC68\u200D\u2696\uFE0F \uD83D\uDC70 \uD83E\uDD35 \uD83D\uDC78 \uD83E\uDD34 \uD83E\uDD36 \uD83C\uDF85 \uD83E\uDDD9\u200D\u2640\uFE0F \uD83E\uDDD9\u200D\u2642\uFE0F \uD83E\uDDDD\u200D\u2640\uFE0F \uD83E\uDDDD\u200D\u2642\uFE0F \uD83E\uDDDB\u200D\u2640\uFE0F \uD83E\uDDDB\u200D\u2642\uFE0F \uD83E\uDDDF\u200D\u2640\uFE0F \uD83E\uDDDF\u200D\u2642\uFE0F \uD83E\uDDDE\u200D\u2640\uFE0F \uD83E\uDDDE\u200D\u2642\uFE0F \uD83E\uDDDC\u200D\u2640\uFE0F \uD83E\uDDDC\u200D\u2642\uFE0F \uD83E\uDDDA\u200D\u2640\uFE0F \uD83E\uDDDA\u200D\u2642\uFE0F \uD83D\uDC7C \uD83E\uDD30 \uD83E\uDD31 \uD83D\uDE47\u200D\u2640\uFE0F \uD83D\uDE47\u200D\u2642\uFE0F \uD83D\uDC81\u200D\u2640\uFE0F \uD83D\uDC81\u200D\u2642\uFE0F \uD83D\uDE45\u200D\u2640\uFE0F \uD83D\uDE45\u200D\u2642\uFE0F \uD83D\uDE46\u200D\u2640\uFE0F \uD83D\uDE46\u200D\u2642\uFE0F \uD83D\uDE4B\u200D\u2640\uFE0F \uD83D\uDE4B\u200D\u2642\uFE0F \uD83E\uDD26\u200D\u2640\uFE0F \uD83E\uDD26\u200D\u2642\uFE0F \uD83E\uDD37\u200D\u2640\uFE0F \uD83E\uDD37\u200D\u2642\uFE0F \uD83D\uDE4E\u200D\u2640\uFE0F \uD83D\uDE4E\u200D\u2642\uFE0F \uD83D\uDE4D\u200D\u2640\uFE0F \uD83D\uDE4D\u200D\u2642\uFE0F \uD83D\uDC87\u200D\u2640\uFE0F \uD83D\uDC87\u200D\u2642\uFE0F \uD83D\uDC86\u200D\u2640\uFE0F \uD83D\uDC86\u200D\u2642\uFE0F \uD83E\uDDD6\u200D\u2640\uFE0F \uD83E\uDDD6\u200D\u2642\uFE0F \uD83D\uDC85 \uD83E\uDD33 \uD83D\uDC83 \uD83D\uDD7A \uD83D\uDC6F\u200D\u2640\uFE0F \uD83D\uDC6F\u200D\u2642\uFE0F \uD83D\uDD74 \uD83D\uDEB6\u200D\u2640\uFE0F \uD83D\uDEB6\u200D\u2642\uFE0F \uD83C\uDFC3\u200D\u2640\uFE0F \uD83C\uDFC3\u200D\u2642\uFE0F \uD83D\uDC6B \uD83D\uDC6D \uD83D\uDC6C \uD83D\uDC91 \uD83D\uDC69\u200D\u2764\uFE0F\u200D\uD83D\uDC69 \uD83D\uDC68\u200D\u2764\uFE0F\u200D\uD83D\uDC68 \uD83D\uDC8F \uD83D\uDC69\u200D\u2764\uFE0F\u200D\uD83D\uDC8B\u200D\uD83D\uDC69 \uD83D\uDC68\u200D\u2764\uFE0F\u200D\uD83D\uDC8B\u200D\uD83D\uDC68 \uD83D\uDC6A \uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67 \uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66 \uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC66\u200D\uD83D\uDC66 \uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC67 \uD83D\uDC69\u200D\uD83D\uDC69\u200D\uD83D\uDC66 \uD83D\uDC69\u200D\uD83D\uDC69\u200D\uD83D\uDC67 \uD83D\uDC69\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66 \uD83D\uDC69\u200D\uD83D\uDC69\u200D\uD83D\uDC66\u200D\uD83D\uDC66 \uD83D\uDC69\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC67 \uD83D\uDC68\u200D\uD83D\uDC68\u200D\uD83D\uDC66 \uD83D\uDC68\u200D\uD83D\uDC68\u200D\uD83D\uDC67 \uD83D\uDC68\u200D\uD83D\uDC68\u200D\uD83D\uDC67\u200D\uD83D\uDC66 \uD83D\uDC68\u200D\uD83D\uDC68\u200D\uD83D\uDC66\u200D\uD83D\uDC66 \uD83D\uDC68\u200D\uD83D\uDC68\u200D\uD83D\uDC67\u200D\uD83D\uDC67 \uD83D\uDC69\u200D\uD83D\uDC66 \uD83D\uDC69\u200D\uD83D\uDC67 \uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66 \uD83D\uDC69\u200D\uD83D\uDC66\u200D\uD83D\uDC66 \uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC67 \uD83D\uDC68\u200D\uD83D\uDC66 \uD83D\uDC68\u200D\uD83D\uDC67 \uD83D\uDC68\u200D\uD83D\uDC67\u200D\uD83D\uDC66 \uD83D\uDC68\u200D\uD83D\uDC66\u200D\uD83D\uDC66 \uD83D\uDC68\u200D\uD83D\uDC67\u200D\uD83D\uDC67 \uD83E\uDD32 \uD83D\uDC50 \uD83D\uDE4C \uD83D\uDC4F \uD83E\uDD1D \uD83D\uDC4D \uD83D\uDC4E \uD83D\uDC4A \u270A \uD83E\uDD1B \uD83E\uDD1C \uD83E\uDD1E \u270C\uFE0F \uD83E\uDD1F \uD83E\uDD18 \uD83D\uDC4C \uD83D\uDC48 \uD83D\uDC49 \uD83D\uDC46 \uD83D\uDC47 \u261D\uFE0F \u270B \uD83E\uDD1A \uD83D\uDD90 \uD83D\uDD96 \uD83D\uDC4B \uD83E\uDD19 \uD83D\uDCAA \uD83D\uDD95 \u270D\uFE0F \uD83D\uDE4F \uD83D\uDC8D \uD83D\uDC84 \uD83D\uDC8B \uD83D\uDC44 \uD83D\uDC45 \uD83D\uDC42 \uD83D\uDC43 \uD83D\uDC63 \uD83D\uDC41 \uD83D\uDC40 \uD83E\uDDE0 \uD83D\uDDE3 \uD83D\uDC64 \uD83D\uDC65";
 
-var clothing = exports.clothing = "\uD83E\uDDE5 \uD83D\uDC5A \uD83D\uDC55 \uD83D\uDC56 \uD83D\uDC54 \uD83D\uDC57 \uD83D\uDC59 \uD83D\uDC58 \uD83D\uDC60 \uD83D\uDC61 \uD83D\uDC62 \uD83D\uDC5E \uD83D\uDC5F \uD83E\uDDE6 \uD83E\uDDE4 \uD83E\uDDE3 \uD83C\uDFA9 \uD83E\uDDE2 \uD83D\uDC52 \uD83C\uDF93 \u26D1 \uD83D\uDC51 \uD83D\uDC5D \uD83D\uDC5B \uD83D\uDC5C \uD83D\uDCBC \uD83C\uDF92 \uD83D\uDC53 \uD83D\uDD76 \uD83C\uDF02";
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var pale = exports.pale = "\uD83D\uDC76\uD83C\uDFFB \uD83D\uDC66\uD83C\uDFFB \uD83D\uDC67\uD83C\uDFFB \uD83D\uDC68\uD83C\uDFFB \uD83D\uDC69\uD83C\uDFFB \uD83D\uDC71\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDC71\uD83C\uDFFB \uD83D\uDC74\uD83C\uDFFB \uD83D\uDC75\uD83C\uDFFB \uD83D\uDC72\uD83C\uDFFB \uD83D\uDC73\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDC73\uD83C\uDFFB \uD83D\uDC6E\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDC6E\uD83C\uDFFB \uD83D\uDC77\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDC77\uD83C\uDFFB \uD83D\uDC82\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDC82\uD83C\uDFFB \uD83D\uDD75\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDD75\uD83C\uDFFB \uD83D\uDC69\uD83C\uDFFB\u200D\u2695\uFE0F \uD83D\uDC68\uD83C\uDFFB\u200D\u2695\uFE0F \uD83D\uDC69\uD83C\uDFFB\u200D\uD83C\uDF3E \uD83D\uDC68\uD83C\uDFFB\u200D\uD83C\uDF3E \uD83D\uDC69\uD83C\uDFFB\u200D\uD83C\uDF73 \uD83D\uDC68\uD83C\uDFFB\u200D\uD83C\uDF73 \uD83D\uDC69\uD83C\uDFFB\u200D\uD83C\uDF93 \uD83D\uDC68\uD83C\uDFFB\u200D\uD83C\uDF93 \uD83D\uDC69\uD83C\uDFFB\u200D\uD83C\uDFA4 \uD83D\uDC68\uD83C\uDFFB\u200D\uD83C\uDFA4 \uD83D\uDC69\uD83C\uDFFB\u200D\uD83C\uDFEB \uD83D\uDC68\uD83C\uDFFB\u200D\uD83C\uDFEB \uD83D\uDC69\uD83C\uDFFB\u200D\uD83C\uDFED \uD83D\uDC68\uD83C\uDFFB\u200D\uD83C\uDFED \uD83D\uDC69\uD83C\uDFFB\u200D\uD83D\uDCBB \uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDCBB \uD83D\uDC69\uD83C\uDFFB\u200D\uD83D\uDCBC \uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDCBC \uD83D\uDC69\uD83C\uDFFB\u200D\uD83D\uDD27 \uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDD27 \uD83D\uDC69\uD83C\uDFFB\u200D\uD83D\uDD2C \uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDD2C \uD83D\uDC69\uD83C\uDFFB\u200D\uD83C\uDFA8 \uD83D\uDC68\uD83C\uDFFB\u200D\uD83C\uDFA8 \uD83D\uDC69\uD83C\uDFFB\u200D\uD83D\uDE92 \uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDE92 \uD83D\uDC69\uD83C\uDFFB\u200D\u2708\uFE0F \uD83D\uDC68\uD83C\uDFFB\u200D\u2708\uFE0F \uD83D\uDC69\uD83C\uDFFB\u200D\uD83D\uDE80 \uD83D\uDC68\uD83C\uDFFB\u200D\uD83D\uDE80 \uD83D\uDC69\uD83C\uDFFB\u200D\u2696\uFE0F \uD83D\uDC68\uD83C\uDFFB\u200D\u2696\uFE0F \uD83E\uDD36\uD83C\uDFFB \uD83C\uDF85\uD83C\uDFFB \uD83D\uDC78\uD83C\uDFFB \uD83E\uDD34\uD83C\uDFFB \uD83D\uDC70\uD83C\uDFFB \uD83E\uDD35\uD83C\uDFFB \uD83D\uDC7C\uD83C\uDFFB \uD83E\uDD30\uD83C\uDFFB \uD83D\uDE47\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDE47\uD83C\uDFFB \uD83D\uDC81\uD83C\uDFFB \uD83D\uDC81\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDE45\uD83C\uDFFB \uD83D\uDE45\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDE46\uD83C\uDFFB \uD83D\uDE46\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDE4B\uD83C\uDFFB \uD83D\uDE4B\uD83C\uDFFB\u200D\u2642\uFE0F \uD83E\uDD26\uD83C\uDFFB\u200D\u2640\uFE0F \uD83E\uDD26\uD83C\uDFFB\u200D\u2642\uFE0F \uD83E\uDD37\uD83C\uDFFB\u200D\u2640\uFE0F \uD83E\uDD37\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDE4E\uD83C\uDFFB \uD83D\uDE4E\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDE4D\uD83C\uDFFB \uD83D\uDE4D\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDC87\uD83C\uDFFB \uD83D\uDC87\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDC86\uD83C\uDFFB \uD83D\uDC86\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDD74\uD83C\uDFFB \uD83D\uDC83\uD83C\uDFFB \uD83D\uDD7A\uD83C\uDFFB \uD83D\uDEB6\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDEB6\uD83C\uDFFB \uD83C\uDFC3\uD83C\uDFFB\u200D\u2640\uFE0F \uD83C\uDFC3\uD83C\uDFFB \uD83E\uDD32\uD83C\uDFFB \uD83D\uDC50\uD83C\uDFFB \uD83D\uDE4C\uD83C\uDFFB \uD83D\uDC4F\uD83C\uDFFB \uD83D\uDE4F\uD83C\uDFFB \uD83D\uDC4D\uD83C\uDFFB \uD83D\uDC4E\uD83C\uDFFB \uD83D\uDC4A\uD83C\uDFFB \u270A\uD83C\uDFFB \uD83E\uDD1B\uD83C\uDFFB \uD83E\uDD1C\uD83C\uDFFB \uD83E\uDD1E\uD83C\uDFFB \u270C\uD83C\uDFFB \uD83E\uDD1F\uD83C\uDFFB \uD83E\uDD18\uD83C\uDFFB \uD83D\uDC4C\uD83C\uDFFB \uD83D\uDC48\uD83C\uDFFB \uD83D\uDC49\uD83C\uDFFB \uD83D\uDC46\uD83C\uDFFB \uD83D\uDC47\uD83C\uDFFB \u261D\uD83C\uDFFB \u270B\uD83C\uDFFB \uD83E\uDD1A\uD83C\uDFFB \uD83D\uDD90\uD83C\uDFFB \uD83D\uDD96\uD83C\uDFFB \uD83D\uDC4B\uD83C\uDFFB \uD83E\uDD19\uD83C\uDFFB \uD83D\uDCAA\uD83C\uDFFB \uD83D\uDD95\uD83C\uDFFB \u270D\uD83C\uDFFB \uD83E\uDD33\uD83C\uDFFB \uD83D\uDC85\uD83C\uDFFB \uD83D\uDC42\uD83C\uDFFB \uD83D\uDC43\uD83C\uDFFB";
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var cream = exports.cream = "\uD83D\uDC76\uD83C\uDFFC \uD83D\uDC66\uD83C\uDFFC \uD83D\uDC67\uD83C\uDFFC \uD83D\uDC68\uD83C\uDFFC \uD83D\uDC69\uD83C\uDFFC \uD83D\uDC71\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDC71\uD83C\uDFFC \uD83D\uDC74\uD83C\uDFFC \uD83D\uDC75\uD83C\uDFFC \uD83D\uDC72\uD83C\uDFFC \uD83D\uDC73\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDC73\uD83C\uDFFC \uD83D\uDC6E\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDC6E\uD83C\uDFFC \uD83D\uDC77\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDC77\uD83C\uDFFC \uD83D\uDC82\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDC82\uD83C\uDFFC \uD83D\uDD75\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDD75\uD83C\uDFFC \uD83D\uDC69\uD83C\uDFFC\u200D\u2695\uFE0F \uD83D\uDC68\uD83C\uDFFC\u200D\u2695\uFE0F \uD83D\uDC69\uD83C\uDFFC\u200D\uD83C\uDF3E \uD83D\uDC68\uD83C\uDFFC\u200D\uD83C\uDF3E \uD83D\uDC69\uD83C\uDFFC\u200D\uD83C\uDF73 \uD83D\uDC68\uD83C\uDFFC\u200D\uD83C\uDF73 \uD83D\uDC69\uD83C\uDFFC\u200D\uD83C\uDF93 \uD83D\uDC68\uD83C\uDFFC\u200D\uD83C\uDF93 \uD83D\uDC69\uD83C\uDFFC\u200D\uD83C\uDFA4 \uD83D\uDC68\uD83C\uDFFC\u200D\uD83C\uDFA4 \uD83D\uDC69\uD83C\uDFFC\u200D\uD83C\uDFEB \uD83D\uDC68\uD83C\uDFFC\u200D\uD83C\uDFEB \uD83D\uDC69\uD83C\uDFFC\u200D\uD83C\uDFED \uD83D\uDC68\uD83C\uDFFC\u200D\uD83C\uDFED \uD83D\uDC69\uD83C\uDFFC\u200D\uD83D\uDCBB \uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBB \uD83D\uDC69\uD83C\uDFFC\u200D\uD83D\uDCBC \uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDCBC \uD83D\uDC69\uD83C\uDFFC\u200D\uD83D\uDD27 \uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDD27 \uD83D\uDC69\uD83C\uDFFC\u200D\uD83D\uDD2C \uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDD2C \uD83D\uDC69\uD83C\uDFFC\u200D\uD83C\uDFA8 \uD83D\uDC68\uD83C\uDFFC\u200D\uD83C\uDFA8 \uD83D\uDC69\uD83C\uDFFC\u200D\uD83D\uDE92 \uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDE92 \uD83D\uDC69\uD83C\uDFFC\u200D\u2708\uFE0F \uD83D\uDC68\uD83C\uDFFC\u200D\u2708\uFE0F \uD83D\uDC69\uD83C\uDFFC\u200D\uD83D\uDE80 \uD83D\uDC68\uD83C\uDFFC\u200D\uD83D\uDE80 \uD83D\uDC69\uD83C\uDFFC\u200D\u2696\uFE0F \uD83D\uDC68\uD83C\uDFFC\u200D\u2696\uFE0F \uD83E\uDD36\uD83C\uDFFC \uD83C\uDF85\uD83C\uDFFC \uD83D\uDC78\uD83C\uDFFC \uD83E\uDD34\uD83C\uDFFC \uD83D\uDC70\uD83C\uDFFC \uD83E\uDD35\uD83C\uDFFC \uD83D\uDC7C\uD83C\uDFFC \uD83E\uDD30\uD83C\uDFFC \uD83D\uDE47\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDE47\uD83C\uDFFC \uD83D\uDC81\uD83C\uDFFC \uD83D\uDC81\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDE45\uD83C\uDFFC \uD83D\uDE45\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDE46\uD83C\uDFFC \uD83D\uDE46\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDE4B\uD83C\uDFFC \uD83D\uDE4B\uD83C\uDFFC\u200D\u2642\uFE0F \uD83E\uDD26\uD83C\uDFFC\u200D\u2640\uFE0F \uD83E\uDD26\uD83C\uDFFC\u200D\u2642\uFE0F \uD83E\uDD37\uD83C\uDFFC\u200D\u2640\uFE0F \uD83E\uDD37\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDE4E\uD83C\uDFFC \uD83D\uDE4E\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDE4D\uD83C\uDFFC \uD83D\uDE4D\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDC87\uD83C\uDFFC \uD83D\uDC87\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDC86\uD83C\uDFFC \uD83D\uDC86\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDD74\uD83C\uDFFC \uD83D\uDC83\uD83C\uDFFC \uD83D\uDD7A\uD83C\uDFFC \uD83D\uDEB6\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDEB6\uD83C\uDFFC \uD83C\uDFC3\uD83C\uDFFC\u200D\u2640\uFE0F \uD83C\uDFC3\uD83C\uDFFC \uD83E\uDD32\uD83C\uDFFC \uD83D\uDC50\uD83C\uDFFC \uD83D\uDE4C\uD83C\uDFFC \uD83D\uDC4F\uD83C\uDFFC \uD83D\uDE4F\uD83C\uDFFC \uD83D\uDC4D\uD83C\uDFFC \uD83D\uDC4E\uD83C\uDFFC \uD83D\uDC4A\uD83C\uDFFC \u270A\uD83C\uDFFC \uD83E\uDD1B\uD83C\uDFFC \uD83E\uDD1C\uD83C\uDFFC \uD83E\uDD1E\uD83C\uDFFC \u270C\uD83C\uDFFC \uD83E\uDD1F\uD83C\uDFFC \uD83E\uDD18\uD83C\uDFFC \uD83D\uDC4C\uD83C\uDFFC \uD83D\uDC48\uD83C\uDFFC \uD83D\uDC49\uD83C\uDFFC \uD83D\uDC46\uD83C\uDFFC \uD83D\uDC47\uD83C\uDFFC \u261D\uD83C\uDFFC \u270B\uD83C\uDFFC \uD83E\uDD1A\uD83C\uDFFC \uD83D\uDD90\uD83C\uDFFC \uD83D\uDD96\uD83C\uDFFC \uD83D\uDC4B\uD83C\uDFFC \uD83E\uDD19\uD83C\uDFFC \uD83D\uDCAA\uD83C\uDFFC \uD83D\uDD95\uD83C\uDFFC \u270D\uD83C\uDFFC \uD83E\uDD33\uD83C\uDFFC \uD83D\uDC85\uD83C\uDFFC \uD83D\uDC42\uD83C\uDFFC \uD83D\uDC43\uD83C\uDFFC";
+/*
+  Componente LandMap encargado de mostrar las parcelas 
+  y la navegación entre ellas
 
-var moderateBrown = exports.moderateBrown = "\uD83D\uDC76\uD83C\uDFFD \uD83D\uDC66\uD83C\uDFFD \uD83D\uDC67\uD83C\uDFFD \uD83D\uDC68\uD83C\uDFFD \uD83D\uDC69\uD83C\uDFFD \uD83D\uDC71\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDC71\uD83C\uDFFD \uD83D\uDC74\uD83C\uDFFD \uD83D\uDC75\uD83C\uDFFD \uD83D\uDC72\uD83C\uDFFD \uD83D\uDC73\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDC73\uD83C\uDFFD \uD83D\uDC6E\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDC6E\uD83C\uDFFD \uD83D\uDC77\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDC77\uD83C\uDFFD \uD83D\uDC82\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDC82\uD83C\uDFFD \uD83D\uDD75\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDD75\uD83C\uDFFD \uD83D\uDC69\uD83C\uDFFD\u200D\u2695\uFE0F \uD83D\uDC68\uD83C\uDFFD\u200D\u2695\uFE0F \uD83D\uDC69\uD83C\uDFFD\u200D\uD83C\uDF3E \uD83D\uDC68\uD83C\uDFFD\u200D\uD83C\uDF3E \uD83D\uDC69\uD83C\uDFFD\u200D\uD83C\uDF73 \uD83D\uDC68\uD83C\uDFFD\u200D\uD83C\uDF73 \uD83D\uDC69\uD83C\uDFFD\u200D\uD83C\uDF93 \uD83D\uDC68\uD83C\uDFFD\u200D\uD83C\uDF93 \uD83D\uDC69\uD83C\uDFFD\u200D\uD83C\uDFA4 \uD83D\uDC68\uD83C\uDFFD\u200D\uD83C\uDFA4 \uD83D\uDC69\uD83C\uDFFD\u200D\uD83C\uDFEB \uD83D\uDC68\uD83C\uDFFD\u200D\uD83C\uDFEB \uD83D\uDC69\uD83C\uDFFD\u200D\uD83C\uDFED \uD83D\uDC68\uD83C\uDFFD\u200D\uD83C\uDFED \uD83D\uDC69\uD83C\uDFFD\u200D\uD83D\uDCBB \uD83D\uDC68\uD83C\uDFFD\u200D\uD83D\uDCBB \uD83D\uDC69\uD83C\uDFFD\u200D\uD83D\uDCBC \uD83D\uDC68\uD83C\uDFFD\u200D\uD83D\uDCBC \uD83D\uDC69\uD83C\uDFFD\u200D\uD83D\uDD27 \uD83D\uDC68\uD83C\uDFFD\u200D\uD83D\uDD27 \uD83D\uDC69\uD83C\uDFFD\u200D\uD83D\uDD2C \uD83D\uDC68\uD83C\uDFFD\u200D\uD83D\uDD2C \uD83D\uDC69\uD83C\uDFFD\u200D\uD83C\uDFA8 \uD83D\uDC68\uD83C\uDFFD\u200D\uD83C\uDFA8 \uD83D\uDC69\uD83C\uDFFD\u200D\uD83D\uDE92 \uD83D\uDC68\uD83C\uDFFD\u200D\uD83D\uDE92 \uD83D\uDC69\uD83C\uDFFD\u200D\u2708\uFE0F \uD83D\uDC68\uD83C\uDFFD\u200D\u2708\uFE0F \uD83D\uDC69\uD83C\uDFFD\u200D\uD83D\uDE80 \uD83D\uDC68\uD83C\uDFFD\u200D\uD83D\uDE80 \uD83D\uDC69\uD83C\uDFFD\u200D\u2696\uFE0F \uD83D\uDC68\uD83C\uDFFD\u200D\u2696\uFE0F \uD83E\uDD36\uD83C\uDFFD \uD83C\uDF85\uD83C\uDFFD \uD83D\uDC78\uD83C\uDFFD \uD83E\uDD34\uD83C\uDFFD \uD83D\uDC70\uD83C\uDFFD \uD83E\uDD35\uD83C\uDFFD \uD83D\uDC7C\uD83C\uDFFD \uD83E\uDD30\uD83C\uDFFD \uD83D\uDE47\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDE47\uD83C\uDFFD \uD83D\uDC81\uD83C\uDFFD \uD83D\uDC81\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDE45\uD83C\uDFFD \uD83D\uDE45\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDE46\uD83C\uDFFD \uD83D\uDE46\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDE4B\uD83C\uDFFD \uD83D\uDE4B\uD83C\uDFFD\u200D\u2642\uFE0F \uD83E\uDD26\uD83C\uDFFD\u200D\u2640\uFE0F \uD83E\uDD26\uD83C\uDFFD\u200D\u2642\uFE0F \uD83E\uDD37\uD83C\uDFFD\u200D\u2640\uFE0F \uD83E\uDD37\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDE4E\uD83C\uDFFD \uD83D\uDE4E\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDE4D\uD83C\uDFFD \uD83D\uDE4D\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDC87\uD83C\uDFFD \uD83D\uDC87\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDC86\uD83C\uDFFD \uD83D\uDC86\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDD74\uD83C\uDFFC \uD83D\uDC83\uD83C\uDFFD \uD83D\uDD7A\uD83C\uDFFD \uD83D\uDEB6\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDEB6\uD83C\uDFFD \uD83C\uDFC3\uD83C\uDFFD\u200D\u2640\uFE0F \uD83C\uDFC3\uD83C\uDFFD \uD83E\uDD32\uD83C\uDFFD \uD83D\uDC50\uD83C\uDFFD \uD83D\uDE4C\uD83C\uDFFD \uD83D\uDC4F\uD83C\uDFFD \uD83D\uDE4F\uD83C\uDFFD \uD83D\uDC4D\uD83C\uDFFD \uD83D\uDC4E\uD83C\uDFFD \uD83D\uDC4A\uD83C\uDFFD \u270A\uD83C\uDFFD \uD83E\uDD1B\uD83C\uDFFD \uD83E\uDD1C\uD83C\uDFFD \uD83E\uDD1E\uD83C\uDFFD \u270C\uD83C\uDFFD \uD83E\uDD1F\uD83C\uDFFD \uD83E\uDD18\uD83C\uDFFD \uD83D\uDC4C\uD83C\uDFFD \uD83D\uDC48\uD83C\uDFFD \uD83D\uDC49\uD83C\uDFFD \uD83D\uDC46\uD83C\uDFFD \uD83D\uDC47\uD83C\uDFFD \u261D\uD83C\uDFFD \u270B\uD83C\uDFFD \uD83E\uDD1A\uD83C\uDFFD \uD83D\uDD90\uD83C\uDFFD \uD83D\uDD96\uD83C\uDFFD \uD83D\uDC4B\uD83C\uDFFD \uD83E\uDD19\uD83C\uDFFD \uD83D\uDCAA\uD83C\uDFFD \uD83D\uDD95\uD83C\uDFFD \u270D\uD83C\uDFFD \uD83E\uDD33\uD83C\uDFFD \uD83D\uDC85\uD83C\uDFFD \uD83D\uDC42\uD83C\uDFFD \uD83D\uDC43\uD83C\uDFFD";
+  Las parcelas se representan en un objeto así:
+  ABC
+  DEF
+  GHI
 
-var darkBrown = exports.darkBrown = "\uD83D\uDC76\uD83C\uDFFE \uD83D\uDC66\uD83C\uDFFE \uD83D\uDC67\uD83C\uDFFE \uD83D\uDC68\uD83C\uDFFE \uD83D\uDC69\uD83C\uDFFE \uD83D\uDC71\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDC71\uD83C\uDFFE \uD83D\uDC74\uD83C\uDFFE \uD83D\uDC75\uD83C\uDFFE \uD83D\uDC72\uD83C\uDFFE \uD83D\uDC73\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDC73\uD83C\uDFFE \uD83D\uDC6E\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDC6E\uD83C\uDFFE \uD83D\uDC77\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDC77\uD83C\uDFFE \uD83D\uDC82\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDC82\uD83C\uDFFE \uD83D\uDD75\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDD75\uD83C\uDFFE \uD83D\uDC69\uD83C\uDFFE\u200D\u2695\uFE0F \uD83D\uDC68\uD83C\uDFFE\u200D\u2695\uFE0F \uD83D\uDC69\uD83C\uDFFE\u200D\uD83C\uDF3E \uD83D\uDC68\uD83C\uDFFE\u200D\uD83C\uDF3E \uD83D\uDC69\uD83C\uDFFE\u200D\uD83C\uDF73 \uD83D\uDC68\uD83C\uDFFE\u200D\uD83C\uDF73 \uD83D\uDC69\uD83C\uDFFE\u200D\uD83C\uDF93 \uD83D\uDC68\uD83C\uDFFE\u200D\uD83C\uDF93 \uD83D\uDC69\uD83C\uDFFE\u200D\uD83C\uDFA4 \uD83D\uDC68\uD83C\uDFFE\u200D\uD83C\uDFA4 \uD83D\uDC69\uD83C\uDFFE\u200D\uD83C\uDFEB \uD83D\uDC68\uD83C\uDFFE\u200D\uD83C\uDFEB \uD83D\uDC69\uD83C\uDFFE\u200D\uD83C\uDFED \uD83D\uDC68\uD83C\uDFFE\u200D\uD83C\uDFED \uD83D\uDC69\uD83C\uDFFE\u200D\uD83D\uDCBB \uD83D\uDC68\uD83C\uDFFE\u200D\uD83D\uDCBB \uD83D\uDC69\uD83C\uDFFE\u200D\uD83D\uDCBC \uD83D\uDC68\uD83C\uDFFE\u200D\uD83D\uDCBC \uD83D\uDC69\uD83C\uDFFE\u200D\uD83D\uDD27 \uD83D\uDC68\uD83C\uDFFE\u200D\uD83D\uDD27 \uD83D\uDC69\uD83C\uDFFE\u200D\uD83D\uDD2C \uD83D\uDC68\uD83C\uDFFE\u200D\uD83D\uDD2C \uD83D\uDC69\uD83C\uDFFE\u200D\uD83C\uDFA8 \uD83D\uDC68\uD83C\uDFFE\u200D\uD83C\uDFA8 \uD83D\uDC69\uD83C\uDFFE\u200D\uD83D\uDE92 \uD83D\uDC68\uD83C\uDFFE\u200D\uD83D\uDE92 \uD83D\uDC69\uD83C\uDFFE\u200D\u2708\uFE0F \uD83D\uDC68\uD83C\uDFFE\u200D\u2708\uFE0F \uD83D\uDC69\uD83C\uDFFE\u200D\uD83D\uDE80 \uD83D\uDC68\uD83C\uDFFE\u200D\uD83D\uDE80 \uD83D\uDC69\uD83C\uDFFE\u200D\u2696\uFE0F \uD83D\uDC68\uD83C\uDFFE\u200D\u2696\uFE0F \uD83E\uDD36\uD83C\uDFFE \uD83C\uDF85\uD83C\uDFFE \uD83D\uDC78\uD83C\uDFFE \uD83E\uDD34\uD83C\uDFFE \uD83D\uDC70\uD83C\uDFFE \uD83E\uDD35\uD83C\uDFFE \uD83D\uDC7C\uD83C\uDFFE \uD83E\uDD30\uD83C\uDFFE \uD83D\uDE47\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDE47\uD83C\uDFFE \uD83D\uDC81\uD83C\uDFFE \uD83D\uDC81\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDE45\uD83C\uDFFE \uD83D\uDE45\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDE46\uD83C\uDFFE \uD83D\uDE46\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDE4B\uD83C\uDFFE \uD83D\uDE4B\uD83C\uDFFE\u200D\u2642\uFE0F \uD83E\uDD26\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDD26\uD83C\uDFFE\u200D\u2642\uFE0F \uD83E\uDD37\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDD37\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDE4E\uD83C\uDFFE \uD83D\uDE4E\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDE4D\uD83C\uDFFE \uD83D\uDE4D\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDC87\uD83C\uDFFE \uD83D\uDC87\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDC86\uD83C\uDFFE \uD83D\uDC86\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDD74\uD83C\uDFFE \uD83D\uDC83\uD83C\uDFFE \uD83D\uDD7A\uD83C\uDFFE \uD83D\uDEB6\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDEB6\uD83C\uDFFE \uD83C\uDFC3\uD83C\uDFFE\u200D\u2640\uFE0F \uD83C\uDFC3\uD83C\uDFFE \uD83E\uDD32\uD83C\uDFFE \uD83D\uDC50\uD83C\uDFFE \uD83D\uDE4C\uD83C\uDFFE \uD83D\uDC4F\uD83C\uDFFE \uD83D\uDE4F\uD83C\uDFFE \uD83D\uDC4D\uD83C\uDFFE \uD83D\uDC4E\uD83C\uDFFE \uD83D\uDC4A\uD83C\uDFFE \u270A\uD83C\uDFFE \uD83E\uDD1B\uD83C\uDFFE \uD83E\uDD1C\uD83C\uDFFE \uD83E\uDD1E\uD83C\uDFFE \u270C\uD83C\uDFFE \uD83E\uDD1F\uD83C\uDFFE \uD83E\uDD18\uD83C\uDFFE \uD83D\uDC4C\uD83C\uDFFE \uD83D\uDC48\uD83C\uDFFE \uD83D\uDC49\uD83C\uDFFE \uD83D\uDC46\uD83C\uDFFE \uD83D\uDC47\uD83C\uDFFE \u261D\uD83C\uDFFE \u270B\uD83C\uDFFE \uD83E\uDD1A\uD83C\uDFFE \uD83D\uDD90\uD83C\uDFFE \uD83D\uDD96\uD83C\uDFFE \uD83D\uDC4B\uD83C\uDFFE \uD83E\uDD19\uD83C\uDFFE \uD83D\uDCAA\uD83C\uDFFE \uD83D\uDD95\uD83C\uDFFE \u270D\uD83C\uDFFE \uD83E\uDD33\uD83C\uDFFE \uD83D\uDC85\uD83C\uDFFE \uD83D\uDC42\uD83C\uDFFE \uD83D\uDC43\uD83C\uDFFE";
+  Cuando hay movimientos se calcula lat,lon para cada
+  una de las posiciones del objeto.
 
-var black = exports.black = "\uD83D\uDC76\uD83C\uDFFF \uD83D\uDC66\uD83C\uDFFF \uD83D\uDC67\uD83C\uDFFF \uD83D\uDC68\uD83C\uDFFF \uD83D\uDC69\uD83C\uDFFF \uD83D\uDC71\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDC71\uD83C\uDFFF \uD83D\uDC74\uD83C\uDFFF \uD83D\uDC75\uD83C\uDFFF \uD83D\uDC72\uD83C\uDFFF \uD83D\uDC73\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDC73\uD83C\uDFFF \uD83D\uDC6E\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDC6E\uD83C\uDFFF \uD83D\uDC77\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDC77\uD83C\uDFFF \uD83D\uDC82\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDC82\uD83C\uDFFF \uD83D\uDD75\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDD75\uD83C\uDFFF \uD83D\uDC69\uD83C\uDFFF\u200D\u2695\uFE0F \uD83D\uDC68\uD83C\uDFFF\u200D\u2695\uFE0F \uD83D\uDC69\uD83C\uDFFF\u200D\uD83C\uDF3E \uD83D\uDC68\uD83C\uDFFF\u200D\uD83C\uDF3E \uD83D\uDC69\uD83C\uDFFF\u200D\uD83C\uDF73 \uD83D\uDC68\uD83C\uDFFF\u200D\uD83C\uDF73 \uD83D\uDC69\uD83C\uDFFF\u200D\uD83C\uDF93 \uD83D\uDC68\uD83C\uDFFF\u200D\uD83C\uDF93 \uD83D\uDC69\uD83C\uDFFF\u200D\uD83C\uDFA4 \uD83D\uDC68\uD83C\uDFFF\u200D\uD83C\uDFA4 \uD83D\uDC69\uD83C\uDFFF\u200D\uD83C\uDFEB \uD83D\uDC68\uD83C\uDFFF\u200D\uD83C\uDFEB \uD83D\uDC69\uD83C\uDFFF\u200D\uD83C\uDFED \uD83D\uDC68\uD83C\uDFFF\u200D\uD83C\uDFED \uD83D\uDC69\uD83C\uDFFF\u200D\uD83D\uDCBB \uD83D\uDC68\uD83C\uDFFF\u200D\uD83D\uDCBB \uD83D\uDC69\uD83C\uDFFF\u200D\uD83D\uDCBC \uD83D\uDC68\uD83C\uDFFF\u200D\uD83D\uDCBC \uD83D\uDC69\uD83C\uDFFF\u200D\uD83D\uDD27 \uD83D\uDC68\uD83C\uDFFF\u200D\uD83D\uDD27 \uD83D\uDC69\uD83C\uDFFF\u200D\uD83D\uDD2C \uD83D\uDC68\uD83C\uDFFF\u200D\uD83D\uDD2C \uD83D\uDC69\uD83C\uDFFF\u200D\uD83C\uDFA8 \uD83D\uDC68\uD83C\uDFFF\u200D\uD83C\uDFA8 \uD83D\uDC69\uD83C\uDFFF\u200D\uD83D\uDE92 \uD83D\uDC68\uD83C\uDFFF\u200D\uD83D\uDE92 \uD83D\uDC69\uD83C\uDFFF\u200D\u2708\uFE0F \uD83D\uDC68\uD83C\uDFFF\u200D\u2708\uFE0F \uD83D\uDC69\uD83C\uDFFF\u200D\uD83D\uDE80 \uD83D\uDC68\uD83C\uDFFF\u200D\uD83D\uDE80 \uD83D\uDC69\uD83C\uDFFF\u200D\u2696\uFE0F \uD83D\uDC68\uD83C\uDFFF\u200D\u2696\uFE0F \uD83E\uDD36\uD83C\uDFFF \uD83C\uDF85\uD83C\uDFFF \uD83D\uDC78\uD83C\uDFFF \uD83E\uDD34\uD83C\uDFFF \uD83D\uDC70\uD83C\uDFFF \uD83E\uDD35\uD83C\uDFFF \uD83D\uDC7C\uD83C\uDFFF \uD83E\uDD30\uD83C\uDFFF \uD83D\uDE47\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDE47\uD83C\uDFFF \uD83D\uDC81\uD83C\uDFFF \uD83D\uDC81\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDE45\uD83C\uDFFF \uD83D\uDE45\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDE46\uD83C\uDFFF \uD83D\uDE46\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDE4B\uD83C\uDFFF \uD83D\uDE4B\uD83C\uDFFF\u200D\u2642\uFE0F \uD83E\uDD26\uD83C\uDFFF\u200D\u2640\uFE0F \uD83E\uDD26\uD83C\uDFFF\u200D\u2642\uFE0F \uD83E\uDD37\uD83C\uDFFF\u200D\u2640\uFE0F \uD83E\uDD37\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDE4E\uD83C\uDFFF \uD83D\uDE4E\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDE4D\uD83C\uDFFF \uD83D\uDE4D\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDC87\uD83C\uDFFF \uD83D\uDC87\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDC86\uD83C\uDFFF \uD83D\uDC86\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDD74\uD83C\uDFFF \uD83D\uDC83\uD83C\uDFFF \uD83D\uDD7A\uD83C\uDFFF \uD83D\uDEB6\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDEB6\uD83C\uDFFF \uD83C\uDFC3\uD83C\uDFFF\u200D\u2640\uFE0F \uD83C\uDFC3\uD83C\uDFFF \uD83E\uDD32\uD83C\uDFFF \uD83D\uDC50\uD83C\uDFFF \uD83D\uDE4C\uD83C\uDFFF \uD83D\uDC4F\uD83C\uDFFF \uD83D\uDE4F\uD83C\uDFFF \uD83D\uDC4D\uD83C\uDFFF \uD83D\uDC4E\uD83C\uDFFF \uD83D\uDC4A\uD83C\uDFFF \u270A\uD83C\uDFFF \uD83E\uDD1B\uD83C\uDFFF \uD83E\uDD1C\uD83C\uDFFF \uD83E\uDD1E\uD83C\uDFFF \u270C\uD83C\uDFFF \uD83E\uDD1F\uD83C\uDFFF \uD83E\uDD18\uD83C\uDFFF \uD83D\uDC4C\uD83C\uDFFF \uD83D\uDC48\uD83C\uDFFF \uD83D\uDC49\uD83C\uDFFF \uD83D\uDC46\uD83C\uDFFF \uD83D\uDC47\uD83C\uDFFF \u261D\uD83C\uDFFF \u270B\uD83C\uDFFF \uD83E\uDD1A\uD83C\uDFFF \uD83D\uDD90\uD83C\uDFFF \uD83D\uDD96\uD83C\uDFFF \uD83D\uDC4B\uD83C\uDFFF \uD83E\uDD19\uD83C\uDFFF \uD83D\uDCAA\uD83C\uDFFF \uD83D\uDD95\uD83C\uDFFF \u270D\uD83C\uDFFF \uD83E\uDD33\uD83C\uDFFF \uD83D\uDC85\uD83C\uDFFF \uD83D\uDC42\uD83C\uDFFF \uD83D\uDC43\uD83C\uDFFF";
+*/
 
-var nature = exports.nature = "\uD83D\uDC36 \uD83D\uDC31 \uD83D\uDC2D \uD83D\uDC39 \uD83D\uDC30 \uD83E\uDD8A \uD83D\uDC3B \uD83D\uDC3C \uD83D\uDC28 \uD83D\uDC2F \uD83E\uDD81 \uD83D\uDC2E \uD83D\uDC37 \uD83D\uDC3D \uD83D\uDC38 \uD83D\uDC35 \uD83D\uDE48 \uD83D\uDE49 \uD83D\uDE4A \uD83D\uDC12 \uD83D\uDC14 \uD83D\uDC27 \uD83D\uDC26 \uD83D\uDC24 \uD83D\uDC23 \uD83D\uDC25 \uD83E\uDD86 \uD83E\uDD85 \uD83E\uDD89 \uD83E\uDD87 \uD83D\uDC3A \uD83D\uDC17 \uD83D\uDC34 \uD83E\uDD84 \uD83D\uDC1D \uD83D\uDC1B \uD83E\uDD8B \uD83D\uDC0C \uD83D\uDC1A \uD83D\uDC1E \uD83D\uDC1C \uD83E\uDD97 \uD83D\uDD77 \uD83D\uDD78 \uD83E\uDD82 \uD83D\uDC22 \uD83D\uDC0D \uD83E\uDD8E \uD83E\uDD96 \uD83E\uDD95 \uD83D\uDC19 \uD83E\uDD91 \uD83E\uDD90 \uD83E\uDD80 \uD83D\uDC21 \uD83D\uDC20 \uD83D\uDC1F \uD83D\uDC2C \uD83D\uDC33 \uD83D\uDC0B \uD83E\uDD88 \uD83D\uDC0A \uD83D\uDC05 \uD83D\uDC06 \uD83E\uDD93 \uD83E\uDD8D \uD83D\uDC18 \uD83E\uDD8F \uD83D\uDC2A \uD83D\uDC2B \uD83E\uDD92 \uD83D\uDC03 \uD83D\uDC02 \uD83D\uDC04 \uD83D\uDC0E \uD83D\uDC16 \uD83D\uDC0F \uD83D\uDC11 \uD83D\uDC10 \uD83E\uDD8C \uD83D\uDC15 \uD83D\uDC29 \uD83D\uDC08 \uD83D\uDC13 \uD83E\uDD83 \uD83D\uDD4A \uD83D\uDC07 \uD83D\uDC01 \uD83D\uDC00 \uD83D\uDC3F \uD83E\uDD94 \uD83D\uDC3E \uD83D\uDC09 \uD83D\uDC32 \uD83C\uDF35 \uD83C\uDF84 \uD83C\uDF32 \uD83C\uDF33 \uD83C\uDF34 \uD83C\uDF31 \uD83C\uDF3F \u2618\uFE0F \uD83C\uDF40 \uD83C\uDF8D \uD83C\uDF8B \uD83C\uDF43 \uD83C\uDF42 \uD83C\uDF41 \uD83C\uDF44 \uD83C\uDF3E \uD83D\uDC90 \uD83C\uDF37 \uD83C\uDF39 \uD83E\uDD40 \uD83C\uDF3A \uD83C\uDF38 \uD83C\uDF3C \uD83C\uDF3B \uD83C\uDF1E \uD83C\uDF1D \uD83C\uDF1B \uD83C\uDF1C \uD83C\uDF1A \uD83C\uDF15 \uD83C\uDF16 \uD83C\uDF17 \uD83C\uDF18 \uD83C\uDF11 \uD83C\uDF12 \uD83C\uDF13 \uD83C\uDF14 \uD83C\uDF19 \uD83C\uDF0E \uD83C\uDF0D \uD83C\uDF0F \uD83D\uDCAB \u2B50\uFE0F \uD83C\uDF1F \u2728 \u26A1\uFE0F \u2604\uFE0F \uD83D\uDCA5 \uD83D\uDD25 \uD83C\uDF2A \uD83C\uDF08 \u2600\uFE0F \uD83C\uDF24 \u26C5\uFE0F \uD83C\uDF25 \u2601\uFE0F \uD83C\uDF26 \uD83C\uDF27 \u26C8 \uD83C\uDF29 \uD83C\uDF28 \u2744\uFE0F \u2603\uFE0F \u26C4\uFE0F \uD83C\uDF2C \uD83D\uDCA8 \uD83D\uDCA7 \uD83D\uDCA6 \u2614\uFE0F \u2602\uFE0F \uD83C\uDF0A \uD83C\uDF2B";
+//immutable point structure
+var Point = function () {
+	function Point() {
+		var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+		var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
-var food = exports.food = "\uD83C\uDF4F \uD83C\uDF4E \uD83C\uDF50 \uD83C\uDF4A \uD83C\uDF4B \uD83C\uDF4C \uD83C\uDF49 \uD83C\uDF47 \uD83C\uDF53 \uD83C\uDF48 \uD83C\uDF52 \uD83C\uDF51 \uD83C\uDF4D \uD83E\uDD65 \uD83E\uDD5D \uD83C\uDF45 \uD83C\uDF46 \uD83E\uDD51 \uD83E\uDD66 \uD83E\uDD52 \uD83C\uDF36 \uD83C\uDF3D \uD83E\uDD55 \uD83E\uDD54 \uD83C\uDF60 \uD83E\uDD50 \uD83C\uDF5E \uD83E\uDD56 \uD83E\uDD68 \uD83E\uDDC0 \uD83E\uDD5A \uD83C\uDF73 \uD83E\uDD5E \uD83E\uDD53 \uD83E\uDD69 \uD83C\uDF57 \uD83C\uDF56 \uD83C\uDF2D \uD83C\uDF54 \uD83C\uDF5F \uD83C\uDF55 \uD83E\uDD6A \uD83E\uDD59 \uD83C\uDF2E \uD83C\uDF2F \uD83E\uDD57 \uD83E\uDD58 \uD83E\uDD6B \uD83C\uDF5D \uD83C\uDF5C \uD83C\uDF72 \uD83C\uDF5B \uD83C\uDF63 \uD83C\uDF71 \uD83E\uDD5F \uD83C\uDF64 \uD83C\uDF59 \uD83C\uDF5A \uD83C\uDF58 \uD83C\uDF65 \uD83E\uDD60 \uD83C\uDF62 \uD83C\uDF61 \uD83C\uDF67 \uD83C\uDF68 \uD83C\uDF66 \uD83E\uDD67 \uD83C\uDF70 \uD83C\uDF82 \uD83C\uDF6E \uD83C\uDF6D \uD83C\uDF6C \uD83C\uDF6B \uD83C\uDF7F \uD83C\uDF69 \uD83C\uDF6A \uD83C\uDF30 \uD83E\uDD5C \uD83C\uDF6F \uD83E\uDD5B \uD83C\uDF7C \u2615\uFE0F \uD83C\uDF75 \uD83E\uDD64 \uD83C\uDF76 \uD83C\uDF7A \uD83C\uDF7B \uD83E\uDD42 \uD83C\uDF77 \uD83E\uDD43 \uD83C\uDF78 \uD83C\uDF79 \uD83C\uDF7E \uD83E\uDD44 \uD83C\uDF74 \uD83C\uDF7D \uD83E\uDD63 \uD83E\uDD61 \uD83E\uDD62";
+		_classCallCheck(this, Point);
 
-var activities = exports.activities = "\u26BD\uFE0F \uD83C\uDFC0 \uD83C\uDFC8 \u26BE\uFE0F \uD83C\uDFBE \uD83C\uDFD0 \uD83C\uDFC9 \uD83C\uDFB1 \uD83C\uDFD3 \uD83C\uDFF8 \uD83E\uDD45 \uD83C\uDFD2 \uD83C\uDFD1 \uD83C\uDFCF \u26F3\uFE0F \uD83C\uDFF9 \uD83C\uDFA3 \uD83E\uDD4A \uD83E\uDD4B \uD83C\uDFBD \u26F8 \uD83E\uDD4C \uD83D\uDEF7 \uD83C\uDFBF \u26F7 \uD83C\uDFC2 \uD83C\uDFCB\uFE0F\u200D\u2640\uFE0F \uD83C\uDFCB\uD83C\uDFFB\u200D\u2640\uFE0F \uD83C\uDFCB\uD83C\uDFFC\u200D\u2640\uFE0F \uD83C\uDFCB\uD83C\uDFFD\u200D\u2640\uFE0F \uD83C\uDFCB\uD83C\uDFFE\u200D\u2640\uFE0F \uD83C\uDFCB\uD83C\uDFFF\u200D\u2640\uFE0F \uD83C\uDFCB\uFE0F\u200D\u2642\uFE0F \uD83C\uDFCB\uD83C\uDFFB\u200D\u2642\uFE0F \uD83C\uDFCB\uD83C\uDFFC\u200D\u2642\uFE0F \uD83C\uDFCB\uD83C\uDFFD\u200D\u2642\uFE0F \uD83C\uDFCB\uD83C\uDFFE\u200D\u2642\uFE0F \uD83C\uDFCB\uD83C\uDFFF\u200D\u2642\uFE0F \uD83E\uDD3C\u200D\u2640\uFE0F \uD83E\uDD3C\u200D\u2642\uFE0F \uD83E\uDD38\u200D\u2640\uFE0F \uD83E\uDD38\uD83C\uDFFB\u200D\u2640\uFE0F \uD83E\uDD38\uD83C\uDFFC\u200D\u2640\uFE0F \uD83E\uDD38\uD83C\uDFFD\u200D\u2640\uFE0F \uD83E\uDD38\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDD38\uD83C\uDFFF\u200D\u2640\uFE0F \uD83E\uDD38\u200D\u2642\uFE0F \uD83E\uDD38\uD83C\uDFFB\u200D\u2642\uFE0F \uD83E\uDD38\uD83C\uDFFC\u200D\u2642\uFE0F \uD83E\uDD38\uD83C\uDFFD\u200D\u2642\uFE0F \uD83E\uDD38\uD83C\uDFFE\u200D\u2642\uFE0F \uD83E\uDD38\uD83C\uDFFF\u200D\u2642\uFE0F \u26F9\uFE0F\u200D\u2640\uFE0F \u26F9\uD83C\uDFFB\u200D\u2640\uFE0F \u26F9\uD83C\uDFFC\u200D\u2640\uFE0F \u26F9\uD83C\uDFFD\u200D\u2640\uFE0F \u26F9\uD83C\uDFFE\u200D\u2640\uFE0F \u26F9\uD83C\uDFFF\u200D\u2640\uFE0F \u26F9\uFE0F\u200D\u2642\uFE0F \u26F9\uD83C\uDFFB\u200D\u2642\uFE0F \u26F9\uD83C\uDFFC\u200D\u2642\uFE0F \u26F9\uD83C\uDFFD\u200D\u2642\uFE0F \u26F9\uD83C\uDFFE\u200D\u2642\uFE0F \u26F9\uD83C\uDFFF\u200D\u2642\uFE0F \uD83E\uDD3A \uD83E\uDD3E\u200D\u2640\uFE0F \uD83E\uDD3E\uD83C\uDFFB\u200D\u2640\uFE0F \uD83E\uDD3E\uD83C\uDFFC\u200D\u2640\uFE0F \uD83E\uDD3E\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDD3E\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDD3E\uD83C\uDFFF\u200D\u2640\uFE0F \uD83E\uDD3E\u200D\u2642\uFE0F \uD83E\uDD3E\uD83C\uDFFB\u200D\u2642\uFE0F \uD83E\uDD3E\uD83C\uDFFC\u200D\u2642\uFE0F \uD83E\uDD3E\uD83C\uDFFD\u200D\u2642\uFE0F \uD83E\uDD3E\uD83C\uDFFE\u200D\u2642\uFE0F \uD83E\uDD3E\uD83C\uDFFF\u200D\u2642\uFE0F \uD83C\uDFCC\uFE0F\u200D\u2640\uFE0F \uD83C\uDFCC\uD83C\uDFFB\u200D\u2640\uFE0F \uD83C\uDFCC\uD83C\uDFFC\u200D\u2640\uFE0F \uD83C\uDFCC\uD83C\uDFFD\u200D\u2640\uFE0F \uD83C\uDFCC\uD83C\uDFFE\u200D\u2640\uFE0F \uD83C\uDFCC\uD83C\uDFFF\u200D\u2640\uFE0F \uD83C\uDFCC\uFE0F\u200D\u2642\uFE0F \uD83C\uDFCC\uD83C\uDFFB\u200D\u2642\uFE0F \uD83C\uDFCC\uD83C\uDFFC\u200D\u2642\uFE0F \uD83C\uDFCC\uD83C\uDFFD\u200D\u2642\uFE0F \uD83C\uDFCC\uD83C\uDFFE\u200D\u2642\uFE0F \uD83C\uDFCC\uD83C\uDFFF\u200D\u2642\uFE0F \uD83C\uDFC7 \uD83C\uDFC7\uD83C\uDFFB \uD83C\uDFC7\uD83C\uDFFC \uD83C\uDFC7\uD83C\uDFFD \uD83C\uDFC7\uD83C\uDFFE \uD83C\uDFC7\uD83C\uDFFF \uD83E\uDDD8\u200D\u2640\uFE0F \uD83E\uDDD8\uD83C\uDFFB\u200D\u2640\uFE0F \uD83E\uDDD8\uD83C\uDFFC\u200D\u2640\uFE0F \uD83E\uDDD8\uD83C\uDFFD\u200D\u2640\uFE0F \uD83E\uDDD8\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDDD8\uD83C\uDFFF\u200D\u2640\uFE0F \uD83E\uDDD8\u200D\u2642\uFE0F \uD83E\uDDD8\uD83C\uDFFB\u200D\u2642\uFE0F \uD83E\uDDD8\uD83C\uDFFC\u200D\u2642\uFE0F \uD83E\uDDD8\uD83C\uDFFD\u200D\u2642\uFE0F \uD83E\uDDD8\uD83C\uDFFE\u200D\u2642\uFE0F \uD83E\uDDD8\uD83C\uDFFF\u200D\u2642\uFE0F \uD83C\uDFC4\u200D\u2640\uFE0F \uD83C\uDFC4\uD83C\uDFFB\u200D\u2640\uFE0F \uD83C\uDFC4\uD83C\uDFFC\u200D\u2640\uFE0F \uD83C\uDFC4\uD83C\uDFFD\u200D\u2640\uFE0F \uD83C\uDFC4\uD83C\uDFFE\u200D\u2640\uFE0F \uD83C\uDFC4\uD83C\uDFFF\u200D\u2640\uFE0F \uD83C\uDFC4\u200D\u2642\uFE0F \uD83C\uDFC4\uD83C\uDFFB\u200D\u2642\uFE0F \uD83C\uDFC4\uD83C\uDFFC\u200D\u2642\uFE0F \uD83C\uDFC4\uD83C\uDFFD\u200D\u2642\uFE0F \uD83C\uDFC4\uD83C\uDFFE\u200D\u2642\uFE0F \uD83C\uDFC4\uD83C\uDFFF\u200D\u2642\uFE0F \uD83C\uDFCA\u200D\u2640\uFE0F \uD83C\uDFCA\uD83C\uDFFB\u200D\u2640\uFE0F \uD83C\uDFCA\uD83C\uDFFC\u200D\u2640\uFE0F \uD83C\uDFCA\uD83C\uDFFD\u200D\u2640\uFE0F \uD83C\uDFCA\uD83C\uDFFE\u200D\u2640\uFE0F \uD83C\uDFCA\uD83C\uDFFF\u200D\u2640\uFE0F \uD83C\uDFCA\u200D\u2642\uFE0F \uD83C\uDFCA\uD83C\uDFFB\u200D\u2642\uFE0F \uD83C\uDFCA\uD83C\uDFFC\u200D\u2642\uFE0F \uD83C\uDFCA\uD83C\uDFFD\u200D\u2642\uFE0F \uD83C\uDFCA\uD83C\uDFFE\u200D\u2642\uFE0F \uD83C\uDFCA\uD83C\uDFFF\u200D\u2642\uFE0F \uD83E\uDD3D\u200D\u2640\uFE0F \uD83E\uDD3D\uD83C\uDFFB\u200D\u2640\uFE0F \uD83E\uDD3D\uD83C\uDFFC\u200D\u2640\uFE0F \uD83E\uDD3D\uD83C\uDFFD\u200D\u2640\uFE0F \uD83E\uDD3D\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDD3D\uD83C\uDFFF\u200D\u2640\uFE0F \uD83E\uDD3D\u200D\u2642\uFE0F \uD83E\uDD3D\uD83C\uDFFB\u200D\u2642\uFE0F \uD83E\uDD3D\uD83C\uDFFC\u200D\u2642\uFE0F \uD83E\uDD3D\uD83C\uDFFD\u200D\u2642\uFE0F \uD83E\uDD3D\uD83C\uDFFE\u200D\u2642\uFE0F \uD83E\uDD3D\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDEA3\u200D\u2640\uFE0F \uD83D\uDEA3\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDEA3\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDEA3\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDEA3\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDEA3\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDEA3\u200D\u2642\uFE0F \uD83D\uDEA3\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDEA3\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDEA3\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDEA3\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDEA3\uD83C\uDFFF\u200D\u2642\uFE0F \uD83E\uDDD7\u200D\u2640\uFE0F \uD83E\uDDD7\uD83C\uDFFB\u200D\u2640\uFE0F \uD83E\uDDD7\uD83C\uDFFC\u200D\u2640\uFE0F \uD83E\uDDD7\uD83C\uDFFD\u200D\u2640\uFE0F \uD83E\uDDD7\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDDD7\uD83C\uDFFF\u200D\u2640\uFE0F \uD83E\uDDD7\u200D\u2642\uFE0F \uD83E\uDDD7\uD83C\uDFFB\u200D\u2642\uFE0F \uD83E\uDDD7\uD83C\uDFFC\u200D\u2642\uFE0F \uD83E\uDDD7\uD83C\uDFFD\u200D\u2642\uFE0F \uD83E\uDDD7\uD83C\uDFFE\u200D\u2642\uFE0F \uD83E\uDDD7\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDEB5\u200D\u2640\uFE0F \uD83D\uDEB5\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDEB5\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDEB5\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDEB5\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDEB5\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDEB5\u200D\u2642\uFE0F \uD83D\uDEB5\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDEB5\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDEB5\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDEB5\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDEB5\uD83C\uDFFF\u200D\u2642\uFE0F \uD83D\uDEB4\u200D\u2640\uFE0F \uD83D\uDEB4\uD83C\uDFFB\u200D\u2640\uFE0F \uD83D\uDEB4\uD83C\uDFFC\u200D\u2640\uFE0F \uD83D\uDEB4\uD83C\uDFFD\u200D\u2640\uFE0F \uD83D\uDEB4\uD83C\uDFFE\u200D\u2640\uFE0F \uD83D\uDEB4\uD83C\uDFFF\u200D\u2640\uFE0F \uD83D\uDEB4\u200D\u2642\uFE0F \uD83D\uDEB4\uD83C\uDFFB\u200D\u2642\uFE0F \uD83D\uDEB4\uD83C\uDFFC\u200D\u2642\uFE0F \uD83D\uDEB4\uD83C\uDFFD\u200D\u2642\uFE0F \uD83D\uDEB4\uD83C\uDFFE\u200D\u2642\uFE0F \uD83D\uDEB4\uD83C\uDFFF\u200D\u2642\uFE0F \uD83C\uDFC6 \uD83E\uDD47 \uD83E\uDD48 \uD83E\uDD49 \uD83C\uDFC5 \uD83C\uDF96 \uD83C\uDFF5 \uD83C\uDF97 \uD83C\uDFAB \uD83C\uDF9F \uD83C\uDFAA \uD83E\uDD39\u200D\u2640\uFE0F \uD83E\uDD39\uD83C\uDFFB\u200D\u2640\uFE0F \uD83E\uDD39\uD83C\uDFFC\u200D\u2640\uFE0F \uD83E\uDD39\uD83C\uDFFD\u200D\u2640\uFE0F \uD83E\uDD39\uD83C\uDFFE\u200D\u2640\uFE0F \uD83E\uDD39\uD83C\uDFFF\u200D\u2640\uFE0F \uD83E\uDD39\u200D\u2642\uFE0F \uD83E\uDD39\uD83C\uDFFB\u200D\u2642\uFE0F \uD83E\uDD39\uD83C\uDFFC\u200D\u2642\uFE0F \uD83E\uDD39\uD83C\uDFFD\u200D\u2642\uFE0F \uD83E\uDD39\uD83C\uDFFE\u200D\u2642\uFE0F \uD83E\uDD39\uD83C\uDFFF\u200D\u2642\uFE0F \uD83C\uDFAD \uD83C\uDFA8 \uD83C\uDFAC \uD83C\uDFA4 \uD83C\uDFA7 \uD83C\uDFBC \uD83C\uDFB9 \uD83E\uDD41 \uD83C\uDFB7 \uD83C\uDFBA \uD83C\uDFB8 \uD83C\uDFBB \uD83C\uDFB2 \uD83C\uDFAF \uD83C\uDFB3 \uD83C\uDFAE \uD83C\uDFB0";
+		this.x = x;
+		this.y = y;
+	}
 
-var travel = exports.travel = "\uD83D\uDE97 \uD83D\uDE95 \uD83D\uDE99 \uD83D\uDE8C \uD83D\uDE8E \uD83C\uDFCE \uD83D\uDE93 \uD83D\uDE91 \uD83D\uDE92 \uD83D\uDE90 \uD83D\uDE9A \uD83D\uDE9B \uD83D\uDE9C \uD83D\uDEF4 \uD83D\uDEB2 \uD83D\uDEF5 \uD83C\uDFCD \uD83D\uDEA8 \uD83D\uDE94 \uD83D\uDE8D \uD83D\uDE98 \uD83D\uDE96 \uD83D\uDEA1 \uD83D\uDEA0 \uD83D\uDE9F \uD83D\uDE83 \uD83D\uDE8B \uD83D\uDE9E \uD83D\uDE9D \uD83D\uDE84 \uD83D\uDE85 \uD83D\uDE88 \uD83D\uDE82 \uD83D\uDE86 \uD83D\uDE87 \uD83D\uDE8A \uD83D\uDE89 \u2708\uFE0F \uD83D\uDEEB \uD83D\uDEEC \uD83D\uDEE9 \uD83D\uDCBA \uD83D\uDEF0 \uD83D\uDE80 \uD83D\uDEF8 \uD83D\uDE81 \uD83D\uDEF6 \u26F5\uFE0F \uD83D\uDEA4 \uD83D\uDEE5 \uD83D\uDEF3 \u26F4 \uD83D\uDEA2 \u2693\uFE0F \u26FD\uFE0F \uD83D\uDEA7 \uD83D\uDEA6 \uD83D\uDEA5 \uD83D\uDE8F \uD83D\uDDFA \uD83D\uDDFF \uD83D\uDDFD \uD83D\uDDFC \uD83C\uDFF0 \uD83C\uDFEF \uD83C\uDFDF \uD83C\uDFA1 \uD83C\uDFA2 \uD83C\uDFA0 \u26F2\uFE0F \u26F1 \uD83C\uDFD6 \uD83C\uDFDD \uD83C\uDFDC \uD83C\uDF0B \u26F0 \uD83C\uDFD4 \uD83D\uDDFB \uD83C\uDFD5 \u26FA\uFE0F \uD83C\uDFE0 \uD83C\uDFE1 \uD83C\uDFD8 \uD83C\uDFDA \uD83C\uDFD7 \uD83C\uDFED \uD83C\uDFE2 \uD83C\uDFEC \uD83C\uDFE3 \uD83C\uDFE4 \uD83C\uDFE5 \uD83C\uDFE6 \uD83C\uDFE8 \uD83C\uDFEA \uD83C\uDFEB \uD83C\uDFE9 \uD83D\uDC92 \uD83C\uDFDB \u26EA\uFE0F \uD83D\uDD4C \uD83D\uDD4D \uD83D\uDD4B \u26E9 \uD83D\uDEE4 \uD83D\uDEE3 \uD83D\uDDFE \uD83C\uDF91 \uD83C\uDFDE \uD83C\uDF05 \uD83C\uDF04 \uD83C\uDF20 \uD83C\uDF87 \uD83C\uDF86 \uD83C\uDF07 \uD83C\uDF06 \uD83C\uDFD9 \uD83C\uDF03 \uD83C\uDF0C \uD83C\uDF09 \uD83C\uDF01";
+	_createClass(Point, [{
+		key: "add",
+		value: function add(_ref) {
+			var x = _ref.x,
+			    y = _ref.y;
 
-var objects = exports.objects = "\u231A\uFE0F \uD83D\uDCF1 \uD83D\uDCF2 \uD83D\uDCBB \u2328\uFE0F \uD83D\uDDA5 \uD83D\uDDA8 \uD83D\uDDB1 \uD83D\uDDB2 \uD83D\uDD79 \uD83D\uDDDC \uD83D\uDCBD \uD83D\uDCBE \uD83D\uDCBF \uD83D\uDCC0 \uD83D\uDCFC \uD83D\uDCF7 \uD83D\uDCF8 \uD83D\uDCF9 \uD83C\uDFA5 \uD83D\uDCFD \uD83C\uDF9E \uD83D\uDCDE \u260E\uFE0F \uD83D\uDCDF \uD83D\uDCE0 \uD83D\uDCFA \uD83D\uDCFB \uD83C\uDF99 \uD83C\uDF9A \uD83C\uDF9B \u23F1 \u23F2 \u23F0 \uD83D\uDD70 \u231B\uFE0F \u23F3 \uD83D\uDCE1 \uD83D\uDD0B \uD83D\uDD0C \uD83D\uDCA1 \uD83D\uDD26 \uD83D\uDD6F \uD83D\uDDD1 \uD83D\uDEE2 \uD83D\uDCB8 \uD83D\uDCB5 \uD83D\uDCB4 \uD83D\uDCB6 \uD83D\uDCB7 \uD83D\uDCB0 \uD83D\uDCB3 \uD83D\uDC8E \u2696\uFE0F \uD83D\uDD27 \uD83D\uDD28 \u2692 \uD83D\uDEE0 \u26CF \uD83D\uDD29 \u2699\uFE0F \u26D3 \uD83D\uDD2B \uD83D\uDCA3 \uD83D\uDD2A \uD83D\uDDE1 \u2694\uFE0F \uD83D\uDEE1 \uD83D\uDEAC \u26B0\uFE0F \u26B1\uFE0F \uD83C\uDFFA \uD83D\uDD2E \uD83D\uDCFF \uD83D\uDC88 \u2697\uFE0F \uD83D\uDD2D \uD83D\uDD2C \uD83D\uDD73 \uD83D\uDC8A \uD83D\uDC89 \uD83C\uDF21 \uD83D\uDEBD \uD83D\uDEB0 \uD83D\uDEBF \uD83D\uDEC1 \uD83D\uDEC0 \uD83D\uDEC0\uD83C\uDFFB \uD83D\uDEC0\uD83C\uDFFC \uD83D\uDEC0\uD83C\uDFFD \uD83D\uDEC0\uD83C\uDFFE \uD83D\uDEC0\uD83C\uDFFF \uD83D\uDECE \uD83D\uDD11 \uD83D\uDDDD \uD83D\uDEAA \uD83D\uDECB \uD83D\uDECF \uD83D\uDECC \uD83D\uDDBC \uD83D\uDECD \uD83D\uDED2 \uD83C\uDF81 \uD83C\uDF88 \uD83C\uDF8F \uD83C\uDF80 \uD83C\uDF8A \uD83C\uDF89 \uD83C\uDF8E \uD83C\uDFEE \uD83C\uDF90 \u2709\uFE0F \uD83D\uDCE9 \uD83D\uDCE8 \uD83D\uDCE7 \uD83D\uDC8C \uD83D\uDCE5 \uD83D\uDCE4 \uD83D\uDCE6 \uD83C\uDFF7 \uD83D\uDCEA \uD83D\uDCEB \uD83D\uDCEC \uD83D\uDCED \uD83D\uDCEE \uD83D\uDCEF \uD83D\uDCDC \uD83D\uDCC3 \uD83D\uDCC4 \uD83D\uDCD1 \uD83D\uDCCA \uD83D\uDCC8 \uD83D\uDCC9 \uD83D\uDDD2 \uD83D\uDDD3 \uD83D\uDCC6 \uD83D\uDCC5 \uD83D\uDCC7 \uD83D\uDDC3 \uD83D\uDDF3 \uD83D\uDDC4 \uD83D\uDCCB \uD83D\uDCC1 \uD83D\uDCC2 \uD83D\uDDC2 \uD83D\uDDDE \uD83D\uDCF0 \uD83D\uDCD3 \uD83D\uDCD4 \uD83D\uDCD2 \uD83D\uDCD5 \uD83D\uDCD7 \uD83D\uDCD8 \uD83D\uDCD9 \uD83D\uDCDA \uD83D\uDCD6 \uD83D\uDD16 \uD83D\uDD17 \uD83D\uDCCE \uD83D\uDD87 \uD83D\uDCD0 \uD83D\uDCCF \uD83D\uDCCC \uD83D\uDCCD \u2702\uFE0F \uD83D\uDD8A \uD83D\uDD8B \u2712\uFE0F \uD83D\uDD8C \uD83D\uDD8D \uD83D\uDCDD \u270F\uFE0F \uD83D\uDD0D \uD83D\uDD0E \uD83D\uDD0F \uD83D\uDD10 \uD83D\uDD12 \uD83D\uDD13";
+			return new Point(this.x + x, this.y + y);
+		}
+	}]);
 
-var symbos = exports.symbos = "\u2764\uFE0F \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 \uD83D\uDC9C \uD83D\uDDA4 \uD83D\uDC94 \u2763\uFE0F \uD83D\uDC95 \uD83D\uDC9E \uD83D\uDC93 \uD83D\uDC97 \uD83D\uDC96 \uD83D\uDC98 \uD83D\uDC9D \uD83D\uDC9F \u262E\uFE0F \u271D\uFE0F \u262A\uFE0F \uD83D\uDD49 \u2638\uFE0F \u2721\uFE0F \uD83D\uDD2F \uD83D\uDD4E \u262F\uFE0F \u2626\uFE0F \uD83D\uDED0 \u26CE \u2648\uFE0F \u2649\uFE0F \u264A\uFE0F \u264B\uFE0F \u264C\uFE0F \u264D\uFE0F \u264E\uFE0F \u264F\uFE0F \u2650\uFE0F \u2651\uFE0F \u2652\uFE0F \u2653\uFE0F \uD83C\uDD94 \u269B\uFE0F \uD83C\uDE51 \u2622\uFE0F \u2623\uFE0F \uD83D\uDCF4 \uD83D\uDCF3 \uD83C\uDE36 \uD83C\uDE1A\uFE0F \uD83C\uDE38 \uD83C\uDE3A \uD83C\uDE37\uFE0F \u2734\uFE0F \uD83C\uDD9A \uD83D\uDCAE \uD83C\uDE50 \u3299\uFE0F \u3297\uFE0F \uD83C\uDE34 \uD83C\uDE35 \uD83C\uDE39 \uD83C\uDE32 \uD83C\uDD70\uFE0F \uD83C\uDD71\uFE0F \uD83C\uDD8E \uD83C\uDD91 \uD83C\uDD7E\uFE0F \uD83C\uDD98 \u274C \u2B55\uFE0F \uD83D\uDED1 \u26D4\uFE0F \uD83D\uDCDB \uD83D\uDEAB \uD83D\uDCAF \uD83D\uDCA2 \u2668\uFE0F \uD83D\uDEB7 \uD83D\uDEAF \uD83D\uDEB3 \uD83D\uDEB1 \uD83D\uDD1E \uD83D\uDCF5 \uD83D\uDEAD \u2757\uFE0F \u2755 \u2753 \u2754 \u203C\uFE0F \u2049\uFE0F \uD83D\uDD05 \uD83D\uDD06 \u303D\uFE0F \u26A0\uFE0F \uD83D\uDEB8 \uD83D\uDD31 \u269C\uFE0F \uD83D\uDD30 \u267B\uFE0F \u2705 \uD83C\uDE2F\uFE0F \uD83D\uDCB9 \u2747\uFE0F \u2733\uFE0F \u274E \uD83C\uDF10 \uD83D\uDCA0 \u24C2\uFE0F \uD83C\uDF00 \uD83D\uDCA4 \uD83C\uDFE7 \uD83D\uDEBE \u267F\uFE0F \uD83C\uDD7F\uFE0F \uD83C\uDE33 \uD83C\uDE02\uFE0F \uD83D\uDEC2 \uD83D\uDEC3 \uD83D\uDEC4 \uD83D\uDEC5 \uD83D\uDEB9 \uD83D\uDEBA \uD83D\uDEBC \uD83D\uDEBB \uD83D\uDEAE \uD83C\uDFA6 \uD83D\uDCF6 \uD83C\uDE01 \uD83D\uDD23 \u2139\uFE0F \uD83D\uDD24 \uD83D\uDD21 \uD83D\uDD20 \uD83C\uDD96 \uD83C\uDD97 \uD83C\uDD99 \uD83C\uDD92 \uD83C\uDD95 \uD83C\uDD93 0\uFE0F\u20E3 1\uFE0F\u20E3 2\uFE0F\u20E3 3\uFE0F\u20E3 4\uFE0F\u20E3 5\uFE0F\u20E3 6\uFE0F\u20E3 7\uFE0F\u20E3 8\uFE0F\u20E3 9\uFE0F\u20E3 \uD83D\uDD1F \uD83D\uDD22 #\uFE0F\u20E3 *\uFE0F\u20E3 \u23CF\uFE0F \u25B6\uFE0F \u23F8 \u23EF \u23F9 \u23FA \u23ED \u23EE \u23E9 \u23EA \u23EB \u23EC \u25C0\uFE0F \uD83D\uDD3C \uD83D\uDD3D \u27A1\uFE0F \u2B05\uFE0F \u2B06\uFE0F \u2B07\uFE0F \u2197\uFE0F \u2198\uFE0F \u2199\uFE0F \u2196\uFE0F \u2195\uFE0F \u2194\uFE0F \u21AA\uFE0F \u21A9\uFE0F \u2934\uFE0F \u2935\uFE0F \uD83D\uDD00 \uD83D\uDD01 \uD83D\uDD02 \uD83D\uDD04 \uD83D\uDD03 \uD83C\uDFB5 \uD83C\uDFB6 \u2795 \u2796 \u2797 \u2716\uFE0F \uD83D\uDCB2 \uD83D\uDCB1 \u2122\uFE0F \xA9\uFE0F \xAE\uFE0F \u3030\uFE0F \u27B0 \u27BF \uD83D\uDD1A \uD83D\uDD19 \uD83D\uDD1B \uD83D\uDD1D \uD83D\uDD1C \u2714\uFE0F \u2611\uFE0F \uD83D\uDD18 \u26AA\uFE0F \u26AB\uFE0F \uD83D\uDD34 \uD83D\uDD35 \uD83D\uDD3A \uD83D\uDD3B \uD83D\uDD38 \uD83D\uDD39 \uD83D\uDD36 \uD83D\uDD37 \uD83D\uDD33 \uD83D\uDD32 \u25AA\uFE0F \u25AB\uFE0F \u25FE\uFE0F \u25FD\uFE0F \u25FC\uFE0F \u25FB\uFE0F \u2B1B\uFE0F \u2B1C\uFE0F \uD83D\uDD08 \uD83D\uDD07 \uD83D\uDD09 \uD83D\uDD0A \uD83D\uDD14 \uD83D\uDD15 \uD83D\uDCE3 \uD83D\uDCE2 \uD83D\uDC41\u200D\uD83D\uDDE8 \uD83D\uDCAC \uD83D\uDCAD \uD83D\uDDEF \u2660\uFE0F \u2663\uFE0F \u2665\uFE0F \u2666\uFE0F \uD83C\uDCCF \uD83C\uDFB4 \uD83C\uDC04\uFE0F \uD83D\uDD50 \uD83D\uDD51 \uD83D\uDD52 \uD83D\uDD53 \uD83D\uDD54 \uD83D\uDD55 \uD83D\uDD56 \uD83D\uDD57 \uD83D\uDD58 \uD83D\uDD59 \uD83D\uDD5A \uD83D\uDD5B \uD83D\uDD5C \uD83D\uDD5D \uD83D\uDD5E \uD83D\uDD5F \uD83D\uDD60 \uD83D\uDD61 \uD83D\uDD62 \uD83D\uDD63 \uD83D\uDD64 \uD83D\uDD65 \uD83D\uDD66 \uD83D\uDD67";
+	return Point;
+}();
 
-var flags = exports.flags = "\uD83C\uDFF3\uFE0F \uD83C\uDFF4 \uD83C\uDFC1 \uD83D\uDEA9 \uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08 \uD83C\uDDE6\uD83C\uDDEB \uD83C\uDDE6\uD83C\uDDFD \uD83C\uDDE6\uD83C\uDDF1 \uD83C\uDDE9\uD83C\uDDFF \uD83C\uDDE6\uD83C\uDDF8 \uD83C\uDDE6\uD83C\uDDE9 \uD83C\uDDE6\uD83C\uDDF4 \uD83C\uDDE6\uD83C\uDDEE \uD83C\uDDE6\uD83C\uDDF6 \uD83C\uDDE6\uD83C\uDDEC \uD83C\uDDE6\uD83C\uDDF7 \uD83C\uDDE6\uD83C\uDDF2 \uD83C\uDDE6\uD83C\uDDFC \uD83C\uDDE6\uD83C\uDDFA \uD83C\uDDE6\uD83C\uDDF9 \uD83C\uDDE6\uD83C\uDDFF \uD83C\uDDE7\uD83C\uDDF8 \uD83C\uDDE7\uD83C\uDDED \uD83C\uDDE7\uD83C\uDDE9 \uD83C\uDDE7\uD83C\uDDE7 \uD83C\uDDE7\uD83C\uDDFE \uD83C\uDDE7\uD83C\uDDEA \uD83C\uDDE7\uD83C\uDDFF \uD83C\uDDE7\uD83C\uDDEF \uD83C\uDDE7\uD83C\uDDF2 \uD83C\uDDE7\uD83C\uDDF9 \uD83C\uDDE7\uD83C\uDDF4 \uD83C\uDDE7\uD83C\uDDE6 \uD83C\uDDE7\uD83C\uDDFC \uD83C\uDDE7\uD83C\uDDF7 \uD83C\uDDEE\uD83C\uDDF4 \uD83C\uDDFB\uD83C\uDDEC \uD83C\uDDE7\uD83C\uDDF3 \uD83C\uDDE7\uD83C\uDDEC \uD83C\uDDE7\uD83C\uDDEB \uD83C\uDDE7\uD83C\uDDEE \uD83C\uDDF0\uD83C\uDDED \uD83C\uDDE8\uD83C\uDDF2 \uD83C\uDDE8\uD83C\uDDE6 \uD83C\uDDEE\uD83C\uDDE8 \uD83C\uDDE8\uD83C\uDDFB \uD83C\uDDE7\uD83C\uDDF6 \uD83C\uDDF0\uD83C\uDDFE \uD83C\uDDE8\uD83C\uDDEB \uD83C\uDDF9\uD83C\uDDE9 \uD83C\uDDE8\uD83C\uDDF1 \uD83C\uDDE8\uD83C\uDDF3 \uD83C\uDDE8\uD83C\uDDFD \uD83C\uDDE8\uD83C\uDDE8 \uD83C\uDDE8\uD83C\uDDF4 \uD83C\uDDF0\uD83C\uDDF2 \uD83C\uDDE8\uD83C\uDDEC \uD83C\uDDE8\uD83C\uDDE9 \uD83C\uDDE8\uD83C\uDDF0 \uD83C\uDDE8\uD83C\uDDF7 \uD83C\uDDE8\uD83C\uDDEE \uD83C\uDDED\uD83C\uDDF7 \uD83C\uDDE8\uD83C\uDDFA \uD83C\uDDE8\uD83C\uDDFC \uD83C\uDDE8\uD83C\uDDFE \uD83C\uDDE8\uD83C\uDDFF \uD83C\uDDE9\uD83C\uDDF0 \uD83C\uDDE9\uD83C\uDDEF \uD83C\uDDE9\uD83C\uDDF2 \uD83C\uDDE9\uD83C\uDDF4 \uD83C\uDDEA\uD83C\uDDE8 \uD83C\uDDEA\uD83C\uDDEC \uD83C\uDDF8\uD83C\uDDFB \uD83C\uDDEC\uD83C\uDDF6 \uD83C\uDDEA\uD83C\uDDF7 \uD83C\uDDEA\uD83C\uDDEA \uD83C\uDDEA\uD83C\uDDF9 \uD83C\uDDEA\uD83C\uDDFA \uD83C\uDDEB\uD83C\uDDF0 \uD83C\uDDEB\uD83C\uDDF4 \uD83C\uDDEB\uD83C\uDDEF \uD83C\uDDEB\uD83C\uDDEE \uD83C\uDDEB\uD83C\uDDF7 \uD83C\uDDEC\uD83C\uDDEB \uD83C\uDDF5\uD83C\uDDEB \uD83C\uDDF9\uD83C\uDDEB \uD83C\uDDEC\uD83C\uDDE6 \uD83C\uDDEC\uD83C\uDDF2 \uD83C\uDDEC\uD83C\uDDEA \uD83C\uDDE9\uD83C\uDDEA \uD83C\uDDEC\uD83C\uDDED \uD83C\uDDEC\uD83C\uDDEE \uD83C\uDDEC\uD83C\uDDF7 \uD83C\uDDEC\uD83C\uDDF1 \uD83C\uDDEC\uD83C\uDDE9 \uD83C\uDDEC\uD83C\uDDF5 \uD83C\uDDEC\uD83C\uDDFA \uD83C\uDDEC\uD83C\uDDF9 \uD83C\uDDEC\uD83C\uDDEC \uD83C\uDDEC\uD83C\uDDF3 \uD83C\uDDEC\uD83C\uDDFC \uD83C\uDDEC\uD83C\uDDFE \uD83C\uDDED\uD83C\uDDF9 \uD83C\uDDED\uD83C\uDDF3 \uD83C\uDDED\uD83C\uDDF0 \uD83C\uDDED\uD83C\uDDFA \uD83C\uDDEE\uD83C\uDDF8 \uD83C\uDDEE\uD83C\uDDF3 \uD83C\uDDEE\uD83C\uDDE9 \uD83C\uDDEE\uD83C\uDDF7 \uD83C\uDDEE\uD83C\uDDF6 \uD83C\uDDEE\uD83C\uDDEA \uD83C\uDDEE\uD83C\uDDF2 \uD83C\uDDEE\uD83C\uDDF1 \uD83C\uDDEE\uD83C\uDDF9 \uD83C\uDDEF\uD83C\uDDF2 \uD83C\uDDEF\uD83C\uDDF5 \uD83C\uDF8C \uD83C\uDDEF\uD83C\uDDEA \uD83C\uDDEF\uD83C\uDDF4 \uD83C\uDDF0\uD83C\uDDFF \uD83C\uDDF0\uD83C\uDDEA \uD83C\uDDF0\uD83C\uDDEE \uD83C\uDDFD\uD83C\uDDF0 \uD83C\uDDF0\uD83C\uDDFC \uD83C\uDDF0\uD83C\uDDEC \uD83C\uDDF1\uD83C\uDDE6 \uD83C\uDDF1\uD83C\uDDFB \uD83C\uDDF1\uD83C\uDDE7 \uD83C\uDDF1\uD83C\uDDF8 \uD83C\uDDF1\uD83C\uDDF7 \uD83C\uDDF1\uD83C\uDDFE \uD83C\uDDF1\uD83C\uDDEE \uD83C\uDDF1\uD83C\uDDF9 \uD83C\uDDF1\uD83C\uDDFA \uD83C\uDDF2\uD83C\uDDF4 \uD83C\uDDF2\uD83C\uDDF0 \uD83C\uDDF2\uD83C\uDDEC \uD83C\uDDF2\uD83C\uDDFC \uD83C\uDDF2\uD83C\uDDFE \uD83C\uDDF2\uD83C\uDDFB \uD83C\uDDF2\uD83C\uDDF1 \uD83C\uDDF2\uD83C\uDDF9 \uD83C\uDDF2\uD83C\uDDED \uD83C\uDDF2\uD83C\uDDF6 \uD83C\uDDF2\uD83C\uDDF7 \uD83C\uDDF2\uD83C\uDDFA \uD83C\uDDFE\uD83C\uDDF9 \uD83C\uDDF2\uD83C\uDDFD \uD83C\uDDEB\uD83C\uDDF2 \uD83C\uDDF2\uD83C\uDDE9 \uD83C\uDDF2\uD83C\uDDE8 \uD83C\uDDF2\uD83C\uDDF3 \uD83C\uDDF2\uD83C\uDDEA \uD83C\uDDF2\uD83C\uDDF8 \uD83C\uDDF2\uD83C\uDDE6 \uD83C\uDDF2\uD83C\uDDFF \uD83C\uDDF2\uD83C\uDDF2 \uD83C\uDDF3\uD83C\uDDE6 \uD83C\uDDF3\uD83C\uDDF7 \uD83C\uDDF3\uD83C\uDDF5 \uD83C\uDDF3\uD83C\uDDF1 \uD83C\uDDF3\uD83C\uDDE8 \uD83C\uDDF3\uD83C\uDDFF \uD83C\uDDF3\uD83C\uDDEE \uD83C\uDDF3\uD83C\uDDEA \uD83C\uDDF3\uD83C\uDDEC \uD83C\uDDF3\uD83C\uDDFA \uD83C\uDDF3\uD83C\uDDEB \uD83C\uDDF0\uD83C\uDDF5 \uD83C\uDDF2\uD83C\uDDF5 \uD83C\uDDF3\uD83C\uDDF4 \uD83C\uDDF4\uD83C\uDDF2 \uD83C\uDDF5\uD83C\uDDF0 \uD83C\uDDF5\uD83C\uDDFC \uD83C\uDDF5\uD83C\uDDF8 \uD83C\uDDF5\uD83C\uDDE6 \uD83C\uDDF5\uD83C\uDDEC \uD83C\uDDF5\uD83C\uDDFE \uD83C\uDDF5\uD83C\uDDEA \uD83C\uDDF5\uD83C\uDDED \uD83C\uDDF5\uD83C\uDDF3 \uD83C\uDDF5\uD83C\uDDF1 \uD83C\uDDF5\uD83C\uDDF9 \uD83C\uDDF5\uD83C\uDDF7 \uD83C\uDDF6\uD83C\uDDE6 \uD83C\uDDF7\uD83C\uDDEA \uD83C\uDDF7\uD83C\uDDF4 \uD83C\uDDF7\uD83C\uDDFA \uD83C\uDDF7\uD83C\uDDFC \uD83C\uDDFC\uD83C\uDDF8 \uD83C\uDDF8\uD83C\uDDF2 \uD83C\uDDF8\uD83C\uDDE6 \uD83C\uDDF8\uD83C\uDDF3 \uD83C\uDDF7\uD83C\uDDF8 \uD83C\uDDF8\uD83C\uDDE8 \uD83C\uDDF8\uD83C\uDDF1 \uD83C\uDDF8\uD83C\uDDEC \uD83C\uDDF8\uD83C\uDDFD \uD83C\uDDF8\uD83C\uDDF0 \uD83C\uDDF8\uD83C\uDDEE \uD83C\uDDEC\uD83C\uDDF8 \uD83C\uDDF8\uD83C\uDDE7 \uD83C\uDDF8\uD83C\uDDF4 \uD83C\uDDFF\uD83C\uDDE6 \uD83C\uDDF0\uD83C\uDDF7 \uD83C\uDDF8\uD83C\uDDF8 \uD83C\uDDEA\uD83C\uDDF8 \uD83C\uDDF1\uD83C\uDDF0 \uD83C\uDDE7\uD83C\uDDF1 \uD83C\uDDF8\uD83C\uDDED \uD83C\uDDF0\uD83C\uDDF3 \uD83C\uDDF1\uD83C\uDDE8 \uD83C\uDDF5\uD83C\uDDF2 \uD83C\uDDFB\uD83C\uDDE8 \uD83C\uDDF8\uD83C\uDDE9 \uD83C\uDDF8\uD83C\uDDF7 \uD83C\uDDF8\uD83C\uDDFF \uD83C\uDDF8\uD83C\uDDEA \uD83C\uDDE8\uD83C\uDDED \uD83C\uDDF8\uD83C\uDDFE \uD83C\uDDF9\uD83C\uDDFC \uD83C\uDDF9\uD83C\uDDEF \uD83C\uDDF9\uD83C\uDDFF \uD83C\uDDF9\uD83C\uDDED \uD83C\uDDF9\uD83C\uDDF1 \uD83C\uDDF9\uD83C\uDDEC \uD83C\uDDF9\uD83C\uDDF0 \uD83C\uDDF9\uD83C\uDDF4 \uD83C\uDDF9\uD83C\uDDF9 \uD83C\uDDF9\uD83C\uDDF3 \uD83C\uDDF9\uD83C\uDDF7 \uD83C\uDDF9\uD83C\uDDF2 \uD83C\uDDF9\uD83C\uDDE8 \uD83C\uDDF9\uD83C\uDDFB \uD83C\uDDFB\uD83C\uDDEE \uD83C\uDDFA\uD83C\uDDEC \uD83C\uDDFA\uD83C\uDDE6 \uD83C\uDDE6\uD83C\uDDEA \uD83C\uDDEC\uD83C\uDDE7 \uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F \uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74\uDB40\uDC7F \uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F \uD83C\uDDFA\uD83C\uDDF8 \uD83C\uDDFA\uD83C\uDDFE \uD83C\uDDFA\uD83C\uDDFF \uD83C\uDDFB\uD83C\uDDFA \uD83C\uDDFB\uD83C\uDDE6 \uD83C\uDDFB\uD83C\uDDEA \uD83C\uDDFB\uD83C\uDDF3 \uD83C\uDDFC\uD83C\uDDEB \uD83C\uDDEA\uD83C\uDDED \uD83C\uDDFE\uD83C\uDDEA \uD83C\uDDFF\uD83C\uDDF2 \uD83C\uDDFF\uD83C\uDDFC";
+var defaultOpts = {
+	parcelLength: 200
+
+	//relations between parcels (useful to recalculate)
+};var REF_MAP = {
+	A: { lat: -1, lon: -1 },
+	B: { lat: 0, lon: -1 },
+	C: { lat: 1, lon: -1 },
+	D: { lat: -1, lon: 0 },
+	E: { lat: 0, lon: 0 },
+	F: { lat: 1, lon: 0 },
+	G: { lat: -1, lon: 1 },
+	H: { lat: 0, lon: 1 },
+	I: { lat: 1, lon: 1 }
+};
+
+var LandMap = function () {
+	function LandMap() {
+		var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultOpts;
+
+		_classCallCheck(this, LandMap);
+
+		this.parcelLength = opts.parcelLength;
+		//Active parcels
+		this.parcelMap = {
+			A: { lat: -1, lon: -1 },
+			B: { lat: 0, lon: -1 },
+			C: { lat: 1, lon: -1 },
+			D: { lat: -1, lon: 0 },
+			E: { lat: 0, lon: 0 },
+			F: { lat: 1, lon: 0 },
+			G: { lat: -1, lon: 1 },
+			H: { lat: 0, lon: 1 },
+			I: { lat: 1, lon: 1 }
+		};
+		this.offset = new Point(0, 0);
+	}
+
+	_createClass(LandMap, [{
+		key: "getActiveParcels",
+		value: function getActiveParcels() {
+			return this.parcelMap;
+		}
+	}, {
+		key: "move",
+		value: function move(_ref2) {
+			var x = _ref2.x,
+			    y = _ref2.y;
+
+			this.offset = this.offset.add({ x: x, y: y });
+			this.recalculatePosition(this.offset);
+		}
+	}, {
+		key: "recalculatePosition",
+		value: function recalculatePosition(offset) {
+
+			var nextLat = Math.floor(offset.x / (this.parcelLength - 1));
+			var nextLon = Math.floor(offset.y / (this.parcelLength - 1));
+			var newOffset = { x: offset.x % this.parcelLength, y: offset.y % this.parcelLength
+				//calculate the new map
+			};var newParcelMap = {};
+			//Use the reference map to calculate the lat, lon
+			//based on the value of E (the center parcel)
+			var centerParcel = {
+				lat: nextLat,
+				lon: nextLon
+			};
+			Object.keys(this.parcelMap).forEach(function (id) {
+				newParcelMap[id] = {
+					lat: centerParcel.lat + REF_MAP[id].lat,
+					lon: centerParcel.lon + REF_MAP[id].lon
+				};
+			});
+			this.parcelMap = newParcelMap;
+			this.offset = newOffset;
+		}
+	}]);
+
+	return LandMap;
+}();
+
+exports.REF_MAP = REF_MAP;
+exports.default = LandMap;
+
+/***/ }),
+
+/***/ "./src/MapView.js":
+/*!************************!*\
+  !*** ./src/MapView.js ***!
+  \************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _LandMap = __webpack_require__(/*! ./LandMap */ "./src/LandMap.js");
+
+var _LandMap2 = _interopRequireDefault(_LandMap);
+
+var _domUtils = __webpack_require__(/*! ./domUtils */ "./src/domUtils.js");
+
+var domUtils = _interopRequireWildcard(_domUtils);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ La clase mapview se encarga de manipular el DOM para
+ mostrar las parcelas
+**/
+
+var defaultOpts = {
+	containerElement: 'body',
+	itemRenderer: null,
+	parcelLength: 200,
+	dataProvider: null
+
+	//TODO: add base css here
+
+};var css = '\n\n\t.content-container {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t\ttransition: transform 0.3s;\n\t}\n\n\t.parcel-container {\n\t\tposition: absolute;\n\t\ttop:0;\n\t\tleft: 0;\n\t\tbackground: darkgrey;\n\t\tbox-sizing: border-box;\n\t\tborder: solid 1px white;\n\t}\n';
+
+domUtils.injectCSS(css);
+
+var MapView = function () {
+	function MapView(opts) {
+		_classCallCheck(this, MapView);
+
+		opts = Object.assign({}, defaultOpts, opts);
+		this.opts = opts;
+		this.dataProvider = opts.dataProvider;
+		this.container = typeof opts.containerElement === 'string' ? document.querySelector(opts.containerElement) : opts.containerElement;
+
+		this.map = new _LandMap2.default({
+			parcelLength: opts.parcelLength
+		});
+		this.initDOM();
+		this.attachEvents();
+		this.updateMap;
+	}
+
+	_createClass(MapView, [{
+		key: 'initDOM',
+		value: function initDOM() {
+			//Create contentContainer
+			this.contentContainer = this.createContentContainer();
+			this.createParcelContainers(this.contentContainer);
+		}
+	}, {
+		key: 'createContentContainer',
+		value: function createContentContainer() {
+			var contentContainer = document.createElement('div');
+			contentContainer.classList.add('content-container');
+			this.container.appendChild(contentContainer);
+			return contentContainer;
+		}
+	}, {
+		key: 'createParcelContainers',
+		value: function createParcelContainers(parent) {
+			var parcelLength = this.opts.parcelLength;
+			//Create element containers for all 9 parcels
+			Object.keys(_LandMap.REF_MAP).forEach(function (parcelId) {
+				//get ref location 
+				var refLocation = _LandMap.REF_MAP[parcelId];
+				var parcelContainer = document.createElement('div');
+				//get the translate values for the parcel
+				var parcelOffset = {
+					x: parcelLength * refLocation.lat,
+					y: parcelLength * refLocation.lon
+				};
+				parcelContainer.style.transform = 'translate(' + parcelOffset.x + 'px,' + parcelOffset.y + 'px)';
+				parcelContainer.style.width = parcelLength + 'px';
+				parcelContainer.style.height = parcelLength + 'px';
+				parcelContainer.classList.add('parcel-container');
+				parent.appendChild(parcelContainer);
+			});
+		}
+	}, {
+		key: 'attachEvents',
+		value: function attachEvents() {
+			this.connectToDataProvider();
+			this.addKeyboardEvents();
+			this.addMouseEvents();
+		}
+	}, {
+		key: 'connectToDataProvider',
+		value: function connectToDataProvider() {
+			var _this = this;
+
+			this.dataProvider.on('item', function (item) {
+				console.log('item received,', item);
+				var itemElem = _this.createItemElement(item);
+				//todo: add to a itemcontainr layer
+				_this.contentContainer.appendChild(itemElem);
+				//set position
+				var pos = _this.getItemPosition(itemElem);
+				itemElem.style.transform = 'translate(' + pos.x + 'px,' + pos.y + 'px)';
+			});
+		}
+	}, {
+		key: 'getItemPosition',
+		value: function getItemPosition(item) {
+			//calculate item the pixel position
+
+			return {
+				x: (item.lat - this.map['A'].lat) * this.opts.parcelLength,
+				y: (item.lon - this.map['A'].lon) * this.opts.parcelLength
+			};
+		}
+	}, {
+		key: 'createItemElement',
+		value: function createItemElement(item) {
+			//todo delegate this to item renderer
+			var elem = document.createElement('div');
+			elem.innerText = item.text;
+			elem.classList.add('item');
+			return elem;
+		}
+	}, {
+		key: 'addKeyboardEvents',
+		value: function addKeyboardEvents() {}
+	}, {
+		key: 'addMouseEvents',
+		value: function addMouseEvents() {}
+	}]);
+
+	return MapView;
+}();
+
+exports.default = MapView;
+
+/***/ }),
+
+/***/ "./src/TestRandomDataProvider2.js":
+/*!****************************************!*\
+  !*** ./src/TestRandomDataProvider2.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _events = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+
+var _events2 = _interopRequireDefault(_events);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var TestDataProvider = function (_EventEmitter) {
+	_inherits(TestDataProvider, _EventEmitter);
+
+	function TestDataProvider() {
+		_classCallCheck(this, TestDataProvider);
+
+		return _possibleConstructorReturn(this, (TestDataProvider.__proto__ || Object.getPrototypeOf(TestDataProvider)).apply(this, arguments));
+	}
+
+	_createClass(TestDataProvider, [{
+		key: 'monitorArea',
+		value: function monitorArea(from, to) {
+			var _this2 = this;
+
+			setInterval(function () {
+				_this2.emit('item', {
+					id: Math.random() * 100,
+					text: 'Some text',
+					lat: Math.random() * (to.lat - from.lat) + from.lat,
+					lon: Math.random() * (to.lon - from.lon) + from.lon
+				});
+			});
+		}
+	}]);
+
+	return TestDataProvider;
+}(_events2.default);
+
+exports.default = TestDataProvider;
+
+/***/ }),
+
+/***/ "./src/domUtils.js":
+/*!*************************!*\
+  !*** ./src/domUtils.js ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports.injectCSS = injectCSS;
+function injectCSS(css) {
+	var styleElem = document.createElement('style');
+	styleElem.setAttribute('type', 'text/css');
+	styleElem.textContent = css;
+	document.querySelector('head').appendChild(styleElem);
+}
 
 /***/ }),
 
@@ -140,267 +905,21 @@ var flags = exports.flags = "\uD83C\uDFF3\uFE0F \uD83C\uDFF4 \uD83C\uDFC1 \uD83D
 "use strict";
 
 
-var _emoji = __webpack_require__(/*! ./emoji */ "./src/emoji.js");
+var _MapView = __webpack_require__(/*! ./MapView */ "./src/MapView.js");
 
-var emoji = _interopRequireWildcard(_emoji);
+var _MapView2 = _interopRequireDefault(_MapView);
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+var _TestRandomDataProvider = __webpack_require__(/*! ./TestRandomDataProvider2 */ "./src/TestRandomDataProvider2.js");
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-/*
- A simple js file.
- Rendering is done with innerHTML.
-*/
+var _TestRandomDataProvider2 = _interopRequireDefault(_TestRandomDataProvider);
 
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var PARCEL_ROWS = 5;
-var PARCEL_COLS = 5;
-var PARCEL_CELLS = PARCEL_ROWS * PARCEL_COLS;
-var CELL_SIZE = 80;
-var PARCEL_WIDTH = PARCEL_ROWS * CELL_SIZE;
-var PARCEL_HEIGHT = PARCEL_ROWS * CELL_SIZE;
-
-/*
-  __ __  __
- / _/ _|/ _|
-( (_\_ \\_ \
- \__|__/|__/
-
-*/
-
-var css = '\n\t* {\n\t\tbox-sizing: border-box;\n\t}\n\n\t#grid-container{\n\t\tposition:fixed;\n\t\twidth:calc(100% - 200px);\n\t\ttop:0;\n\t\tleft:0;\n\t\theight:100vh;\n\t\toverflow: hidden;\n\t}\n\n\t.grid-scrollable-content {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t\ttransition: transform 0.3s;\n\t}\n\n\t.grid {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t}\n\n\t.grid .row {\n\t\tdisplay: flex;\n\t\tflex-direction:row;\n\t}\n\n\t.grid .row .px {\n\t\tfont-size: ' + (CELL_SIZE - 2) + 'px;\n\t\tbackground-color:white;\n\t\tcursor: crosshair;\n\t\twidth: ' + CELL_SIZE + 'px;\n\t\theight: ' + CELL_SIZE + 'px;\n\n\t}\n\n\t#palette-container{\n\t\twidth:200px;\n\t\tposition:fixed;\n\t\ttop:0;\n\t\tbottom:0;\n\t\tright:0;\n\t\toverflow:auto;\n\t\tfont-size:1.5rem;\n\t\tborder-left: solid 1px darkgrey;\n\t\tbackground: #feffe8; /* Old browsers */\n\t\tbackground: -moz-linear-gradient(left, #feffe8 0%, #d6dbbf 100%); /* FF3.6-15 */\n\t\tbackground: -webkit-linear-gradient(left, #feffe8 0%,#d6dbbf 100%); /* Chrome10-25,Safari5.1-6 */\n\t\tbackground: linear-gradient(to right, #feffe8 0%,#d6dbbf 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */\n\t}\n\n\t#palette {\n\t\tpadding:1rem;\n\t\ttext-align:center;\n\t}\n\n\t#palette .title {\n\t\tcolor:black;\n\t\tfont-size:1.2rem;\n\t\tmargin:0;\n\t\tpadding:0;\n\t\tfont-family:verdana;\n\t\tmargin-bottom:1rem;\n\t}\n\n\t#palette div{\n\t\tdisplay:inline-block;\n\t\tfont-size: 32px;\n\t\tcursor: pointer;\n\t\tpadding: 2px;\n\n\t}\n\n\t#palette div:hover{\n\t\tbackground-color:darkgrey;\n\t}\n\n\t\n';
-
-function injectCss(css) {
-	var styleElem = document.createElement('style');
-	styleElem.setAttribute('type', 'text/css');
-	styleElem.textContent = css;
-	document.querySelector('head').appendChild(styleElem);
-}
-
-/*
-
-GLOBALS and STATE
- 	
- */
-
-function getEmojiArray(emoji) {
-	var array = [];
-	Object.keys(emoji).forEach(function (category) {
-		array = array.concat(emoji[category].split(' '));
-	});
-	return array;
-}
-
-function initGrid(rows, cols) {}
-
-function renderPalette(emoji, container) {
-	var markup = '\n\t\t<div id="palette">\n\t\t\t<h2 class="title">Palette</h2>\n\t\t\t' + emoji.map(function (em, ix) {
-		return '<div class=\'ej\'data-ix=' + ix + ' id=\'elem-' + ix + '\'>' + em + '</div>';
-	}).join('\n') + '\n\t\t</div>\n\t';
-	container.innerHTML = markup;
-}
-
-function renderGrid(grid, container) {
-	var rows = Array(PARCEL_ROWS);
-	for (var i = 0; i < rows.length; i++) {
-		rows[i] = grid.slice(i, i + PARCEL_COLS);
-	}
-
-	var renderItem = function renderItem(item) {
-		return '<div class="px"> ' + (item || '☺️') + '  </div>';
-	};
-	var renderRow = function renderRow(rowitems) {
-		return '<div class="row">' + rowitems.map(function (item) {
-			return renderItem(item);
-		}).join('') + ' </div>';
-	};
-
-	var markup = '\n\t\t' + rows.map(function (r) {
-		return renderRow(r);
-	}).join('') + '\n\t ';
-
-	var gridElem = document.createElement('div');
-	gridElem.classList.add('grid');
-	gridElem.innerHTML = markup;
-	container.appendChild(gridElem);
-}
-
-function setupEvents(events) {
-	var palette = document.querySelector('#palette');
-	palette.addEventListener('click', function (ev) {
-		if (ev.target.classList.contains('ej')) {
-			events.onBrushSelected(ev.target.getAttribute('data-ix'));
-		}
-	});
-
-	var grid = document.querySelector('#grid-container');
-	grid.addEventListener('click', function (ev) {
-		if (ev.target.classList.contains('px')) {
-			events.onPixelSelected(ev.target);
-		}
-	});
-
-	document.addEventListener('keyup', function (ev) {
-		var allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
-		if (allowed.indexOf(ev.key) >= 0) {
-			events.onArrowPressed(ev.key);
-		}
-	});
-}
-
-function init(state) {
-	injectCss(css);
-	renderPalette(state.emojis, document.querySelector('#palette-container'));
-	setupEvents({
-		onBrushSelected: function onBrushSelected(brush) {
-			state.brushIx = brush;
-		},
-		onPixelSelected: function onPixelSelected(pixelElem) {
-			pixelElem.innerHTML = state.emojis[state.brushIx];
-		},
-		onArrowPressed: function onArrowPressed(key) {
-			switch (key) {
-				case "ArrowDown":
-					move({ y: 100 });
-					break;
-				case "ArrowLeft":
-					move({ x: -100 });
-
-					break;
-				case "ArrowRight":
-					move({ x: 100 });
-					break;
-				case "ArrowUp":
-					move({ y: -100 });
-					break;
-			}
-		}
-	});
-	renderParcels(state.parcels);
-	setCurrentParcel(state.parcels[0]);
-}
-
-//TODO: remove state modifications
-function move(_ref) {
-	var _ref$x = _ref.x,
-	    x = _ref$x === undefined ? 0 : _ref$x,
-	    _ref$y = _ref.y,
-	    y = _ref$y === undefined ? 0 : _ref$y;
-
-	state.offset = { x: state.offset.x + x, y: state.offset.y + y };
-	var grid = document.querySelector('.grid-scrollable-content');
-	grid.style.transform = 'translate(' + -state.offset.x + 'px, ' + -state.offset.y + 'px)';
-	var p = getCurrentParcel(state.offset);
-	var equal = p.lat == state.currentParcel.lat && p.lon == state.currentParcel.lon;
-	if (!equal) {
-		console.log('parcel changed!');
-		setCurrentParcel(p);
-	}
-}
-
-function renderParcels(parcels) {
-	parcels.forEach(function (parcel) {
-		renderParcel(parcel);
-	});
-}
-
-// Returns the current parcel
-// Returns {lat,lon}
-function getCurrentParcel(offset) {
-	console.log('offset', offset);
-	var lat = Math.floor(offset.x / PARCEL_WIDTH);
-	var lon = Math.floor(offset.y / PARCEL_HEIGHT);
-	return { lat: lat, lon: lon };
-}
-
-function renderParcel(parcel) {
-	//get parcel location based on lat,lon
-	var x = parcel.lat * PARCEL_WIDTH;
-	var y = parcel.lon * PARCEL_HEIGHT;
-	var parcelContainer = document.createElement('div');
-	parcelContainer.id = 'parcel-' + parcel.lat + '-' + parcel.lon;
-	parcelContainer.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-	var gridContainer = document.querySelector('.grid-scrollable-content');
-	gridContainer.appendChild(parcelContainer);
-	renderGrid(parcel.grid, parcelContainer);
-}
-
-function setCurrentParcel(p) {
-	state.currentParcel = p;
-	//TODO: remove old parcels
-	var surrParcelLocs = getSurroundingParcels(p);
-
-	removeHiddenParcelsFromPage([p].concat(_toConsumableArray(surrParcelLocs)));
-
-	//Create parcel objects 
-	surrParcelLocs.forEach(function (p) {
-		console.log('processing', p);
-		if (!parcelPresent(p)) {
-			var parcel = createParcel(p);
-			state.parcels.push(createParcel(parcel));
-			renderParcel(parcel);
-		}
-	});
-}
-
-//Remove parcels from page and state
-function removeHiddenParcelsFromPage(focusedParcels) {
-	var focusedParcelIds = focusedParcels.map(function (p) {
-		return p.id;
-	});
-	var hiddenParcels = state.parcels.filter(function (p) {
-		return focusedParcelIds.indexOf(p.id) < 0;
-	});
-	//remove from dom
-	hiddenParcels.forEach(function (hp) {
-		//TODO: remove listeners
-		var elem = document.querySelector('#parcel-' + hp.lat + '-' + hp.lon);
-		elem && elem.remove();
-		console.log('removing unused parcel', hp);
-	});
-}
-
-//TODO: replace this when parcels is a map
-//TODO: use a map for parcels
-function parcelPresent(parcel) {
-	return state.parcels.find(function (p) {
-		return p.lat === parcel.lat && p.lon === parcel.lon;
-	}) != null;
-}
-
-function createParcel(_ref2) {
-	var lat = _ref2.lat,
-	    lon = _ref2.lon;
-
-	return {
-		id: lat + '-' + lon,
-		lat: lat,
-		lon: lon,
-		grid: Array(PARCEL_CELLS).fill('')
-
-	};
-}
-
-//Receives the parcel location {lat,lon}
-//Returns the location of the surroundinga parcels
-function getSurroundingParcels(p) {
-	return [{ lat: p.lat + 1, lon: p.lon }, { lat: p.lat + 1, lon: p.lon + 1 }, { lat: p.lat + 1, lon: p.lon - 1 }, { lat: p.lat - 1, lon: p.lon }, { lat: p.lat - 1, lon: p.lon + 1 }, { lat: p.lat - 1, lon: p.lon - 1 }, { lat: p.lat, lon: p.lon + 1 }, { lat: p.lat, lon: p.lon - 1 }].map(function (item) {
-		//set the id
-		return Object.assign({}, item, { id: item.lat + '-' + item.lon });
-	});
-}
-
-// The management state library (patent pending)
-var state = {
-	emptyIx: 50,
-	currentParcel: { lat: 0, lon: 0 },
-	parcels: [createParcel({ lat: 0, lon: 0 })],
-	emojis: getEmojiArray(emoji),
-	brushIx: 1,
-	offset: { x: 0, y: 0 }
-};
-
-init(state);
+//this should render the parcels
+new _MapView2.default({
+	dataProvider: new _TestRandomDataProvider2.default(),
+	parcelLength: 200
+});
 
 /***/ })
 
