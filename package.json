@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "babel-loader": "^7.1.4",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "eventemitter": "^0.3.3",
     "events": "^3.0.0",

@@ -1,10 +1,13 @@
 import LandMap,{REF_MAP} from './LandMap'
 import * as domUtils from './domUtils'
+import {Point} from './utils'
 
 /**
  La clase mapview se encarga de manipular el DOM para
  mostrar las parcelas
 **/
+
+//TODO: format, change tabs to spaces
 
 const defaultOpts = {
 	containerElement: 'body',
@@ -21,16 +24,15 @@ const css = `
 		position: absolute;
 		top: 0;
 		left: 0;
-		transition: transform 0.3s;
+		overflow: hidden;
+		width: 100%;
+		height: 100%;
 	}
 
-	.parcel-container {
-		position: absolute;
-		top:0;
-		left: 0;
-		background: darkgrey;
-		box-sizing: border-box;
-		border: solid 1px white;
+	.item {
+	    position: absolute;
+	    top: 0;
+	    left: 0;
 	}
 `
 
@@ -41,23 +43,28 @@ export default class MapView {
 	constructor(opts) {
 		opts = Object.assign({}, defaultOpts,  opts);
 		this.opts = opts; 
+		this.offset = opts.offset || new Point(0,0)
 		this.dataProvider = opts.dataProvider;
 		this.container = typeof opts.containerElement === 'string' ? 
 			document.querySelector(opts.containerElement) :
 			opts.containerElement
 
 		this.map = new LandMap({
-			parcelLength: opts.parcelLength
+			parcelLength: opts.parcelLength,
+			offset: this.offset
 		})
 		this.initDOM()
 		this.attachEvents()
-		this.updateMap
+		//Start monitoring the initial map areachanged
+		var initialArea = this.map.getArea();
+		this.dataProvider.monitorArea(initialArea[0], initialArea[1])
+
 	}
 
 	initDOM() {
 		//Create contentContainer
 		this.contentContainer = this.createContentContainer();
-		this.createParcelContainers(this.contentContainer);
+		//this.createParcelContainers(this.contentContainer);
 
 	}
 
@@ -91,30 +98,67 @@ export default class MapView {
 
 
 	attachEvents() {
+		this.monitorMapOffset();
 		this.connectToDataProvider();
 		this.addKeyboardEvents();
 		this.addMouseEvents()
+	}
+
+	monitorMapOffset() {
+
+		this.map.on('offsetchanged', (offset)=>{
+			//map was moved
+			this.offset = offset;
+			//update transform attribute so they move
+			this.updateElementPositions(offset);
+		})
+
+		//when the area to monitor changes
+		//receives the newArea [P1,P2] where
+		//P1 is the top left point (lat,lon)
+		//and P2 is the bottom right point
+		this.map.on('areachanged', (startPoint, endPoint)=>{
+			//When current parcel changes (and their surroundings)
+			//TODO: call monitorarea (dataprovider)
+			console.log('parcel map changed')
+			this.dataProvider.monitorArea(startPoint, endPoint)
+		})
+	}
+
+	updateElementPositions(offset) {
+		//upate dom elements transform attribute
+		var elems = Array.from(this.contentContainer.querySelectorAll('.item'))
+		elems.forEach((elem)=>{
+			let pos = this.getItemPosition(Number(elem.dataset.lat), Number(elem.dataset.lon), offset);
+			elem.style.transform = `translate(${pos.x}px,${pos.y}px)`
+
+		})
 	}
 
 	connectToDataProvider() {
 		this.dataProvider.on('item', (item)=>{
 			console.log('item received,', item)
 			let itemElem = this.createItemElement(item);
+			itemElem.classList.add('item')
+			itemElem.dataset.lat = item.lat
+			itemElem.dataset.lon = item.lon
+
 			//todo: add to a itemcontainr layer
 			this.contentContainer.appendChild(itemElem);
 			//set position
-			let pos = this.getItemPosition(itemElem);
+			let pos = this.getItemPosition(item.lat, item.lon, this.offset);
+			console.log('item pos', pos)
 			itemElem.style.transform = `translate(${pos.x}px,${pos.y}px)`
 
 		})
 	}
 
-	getItemPosition(item) {
+	getItemPosition(lat, lon, offset) {
 		//calculate item the pixel position
-
+ 		//TODO: don't access parcelMap directly
 		return {
-			x: (item.lat - this.map['A'].lat ) * this.opts.parcelLength,
-			y: (item.lon - this.map['A'].lon ) * this.opts.parcelLength
+			x: (lat - this.map.parcelMap['A'].lat ) * this.opts.parcelLength + offset.x,
+			y: (lon - this.map.parcelMap['A'].lon ) * this.opts.parcelLength + offset.y
 		}
 	}
 
@@ -122,12 +166,32 @@ export default class MapView {
 		//todo delegate this to item renderer
 		var elem = document.createElement('div')
 		elem.innerText = item.text;
-		elem.classList.add('item')
 		return elem;
 	}
 
 	addKeyboardEvents() {
-
+		document.addEventListener('keyup', (ev)=>{
+			const allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
+			if(allowed.indexOf(ev.key) >= 0 ) {
+					switch(ev.key) {
+					case "ArrowDown":
+						this.map.move({y:100});
+						break;
+					case "ArrowLeft":
+						this.map.move({x:-100});
+						
+						break;
+					case "ArrowRight":
+						this.map.move({x:100});
+						break;
+					case "ArrowUp":
+						this.map.move({y:-100});
+						break;
+					default:
+						break;
+				}	
+			}
+		})
 	}
 
 	addMouseEvents() {

@@ -1,15 +1,20 @@
 import EventEmitter from 'events'
 
 class TestDataProvider extends EventEmitter {
+	constructor() {
+		super();
+	}
+
 	monitorArea(from, to) {
-		setInterval(()=>{
+		let lat = 0
+			let lon = 0
 			this.emit('item', {
 				id:Math.random()*100,
-				text:'Some text',
-				lat: Math.random() * (to.lat - from.lat) + from.lat,
-				lon: Math.random() * (to.lon - from.lon) + from.lon,
+				text:'Some text' + Math.random()*2000,
+				lat,
+				lon,
 			})
-		})
+
 	}
 }
 export default TestDataProvider

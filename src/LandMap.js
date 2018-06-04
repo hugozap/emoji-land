@@ -12,21 +12,13 @@
 
 */
 
+import EventEmitter from 'events'
+import {Point} from './utils'
 
-//immutable point structure
-class Point {
-
-	constructor(x=0, y=0) {
-		this.x = x;
-		this.y = y;
-	}
-	add({x,y}) {
-		return new Point(this.x+x, this.y+y)
-	}
-}
 
 const defaultOpts = {
-	parcelLength: 200
+	parcelLength: 200,
+	offset: new Point(0,0)
 }
 
 //relations between parcels (useful to recalculate)
@@ -42,10 +34,10 @@ const REF_MAP ={
 			I:{lat: 1, lon: 1}
 		}
 
-class LandMap {
+class LandMap extends EventEmitter {
 
 	constructor(opts = defaultOpts) {
-
+		super();
 		this.parcelLength = opts.parcelLength;
 		//Active parcels
 		this.parcelMap = {
@@ -59,23 +51,38 @@ class LandMap {
 			H:{lat: 0, lon: 1},
 			I:{lat: 1, lon: 1},
 		}
-		this.offset = new Point(0,0)
+		this.offset = opts.offset
 	}
 
 	getActiveParcels() {
 		return this.parcelMap;
 	}
 
-	move({x,y}) {
+	move({x=0,y=0}) {
 		this.offset = this.offset.add({x,y})
+		this.emit('offsetchanged', this.offset);
 		this.recalculatePosition(this.offset);
+	}
+
+	//Returns 2 points (top,left) and (bottom,right)
+	//encompassing the total area (the 9 parcels)
+	getArea() {
+		const from = {
+			x: this.parcelMap['A'].lat,
+			y: this.parcelMap['A'].lon,
+		}
+
+		const to = {
+			x: this.parcelMap['I'].lat + 1,
+			y: this.parcelMap['I'].lon + 1,
+		}
+		return [new Point(from.x, from.y), new Point(to.x, to.y)]
 	}
 
 	recalculatePosition(offset) {
 
 		const nextLat = Math.floor(offset.x / (this.parcelLength - 1));
 		const nextLon = Math.floor(offset.y / (this.parcelLength - 1));
-		const newOffset = {x: offset.x % this.parcelLength,y: offset.y % this.parcelLength}
 		//calculate the new map
 		const newParcelMap = {}
 		//Use the reference map to calculate the lat, lon
@@ -84,16 +91,31 @@ class LandMap {
 			lat:nextLat,
 			lon:nextLon
 		}
+
+		//save the previous values of 'A' to detect if
+		//the map changed
+		const prevStart = {...this.parcelMap['A']}
+
 		Object.keys(this.parcelMap).forEach((id)=>{
 			newParcelMap[id] =  {
 				lat: centerParcel.lat + REF_MAP[id].lat,
 				lon: centerParcel.lon + REF_MAP[id].lon,
 			}
 		})
-		this.parcelMap = newParcelMap;
-		this.offset = newOffset;
+
+		const newStart = {...newParcelMap['A']}
+		if(prevStart.lat != newStart.lat || prevStart.lon != newStart.lon) {
+			//the start parcel 'A' changed, so all the map changed
+			this.parcelMap = newParcelMap;
+			//the area to monitor changed
+			let newArea = this.getArea()
+			this.emit('areachanged', newArea[0], newArea[1] );
+		}
+
 
 	}
+
+
 }
 
 export {REF_MAP};

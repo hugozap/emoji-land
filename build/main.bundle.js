@@ -86,14 +86,18 @@
 /************************************************************************/
 /******/ ({
 
-/***/ "./node_modules/events/events.js":
-/*!***************************************!*\
-  !*** ./node_modules/events/events.js ***!
-  \***************************************/
+/***/ "./node_modules/node-libs-browser/node_modules/events/events.js":
+/*!**********************************************************************!*\
+  !*** ./node_modules/node-libs-browser/node_modules/events/events.js ***!
+  \**********************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -115,38 +119,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var R = (typeof Reflect === 'undefined' ? 'undefined' : _typeof(Reflect)) === 'object' ? Reflect : null;
-var ReflectApply = R && typeof R.apply === 'function' ? R.apply : function ReflectApply(target, receiver, args) {
-  return Function.prototype.apply.call(target, receiver, args);
-};
-
-var ReflectOwnKeys;
-if (R && typeof R.ownKeys === 'function') {
-  ReflectOwnKeys = R.ownKeys;
-} else if (Object.getOwnPropertySymbols) {
-  ReflectOwnKeys = function ReflectOwnKeys(target) {
-    return Object.getOwnPropertyNames(target).concat(Object.getOwnPropertySymbols(target));
-  };
-} else {
-  ReflectOwnKeys = function ReflectOwnKeys(target) {
-    return Object.getOwnPropertyNames(target);
-  };
-}
-
-function ProcessEmitWarning(warning) {
-  if (console && console.warn) console.warn(warning);
-}
-
-var NumberIsNaN = Number.isNaN || function NumberIsNaN(value) {
-  return value !== value;
-};
-
 function EventEmitter() {
-  EventEmitter.init.call(this);
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
 }
 module.exports = EventEmitter;
 
@@ -154,225 +129,153 @@ module.exports = EventEmitter;
 EventEmitter.EventEmitter = EventEmitter;
 
 EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._eventsCount = 0;
 EventEmitter.prototype._maxListeners = undefined;
 
 // By default EventEmitters will print a warning if more than 10 listeners are
 // added to it. This is a useful default which helps finding memory leaks.
-var defaultMaxListeners = 10;
-
-Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
-  enumerable: true,
-  get: function get() {
-    return defaultMaxListeners;
-  },
-  set: function set(arg) {
-    if (typeof arg !== 'number' || arg < 0 || NumberIsNaN(arg)) {
-      throw new RangeError('The value of "defaultMaxListeners" is out of range. It must be a non-negative number. Received ' + arg + '.');
-    }
-    defaultMaxListeners = arg;
-  }
-});
-
-EventEmitter.init = function () {
-
-  if (this._events === undefined || this._events === Object.getPrototypeOf(this)._events) {
-    this._events = Object.create(null);
-    this._eventsCount = 0;
-  }
-
-  this._maxListeners = this._maxListeners || undefined;
-};
+EventEmitter.defaultMaxListeners = 10;
 
 // Obviously not all Emitters should be limited to 10. This function allows
 // that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
-  if (typeof n !== 'number' || n < 0 || NumberIsNaN(n)) {
-    throw new RangeError('The value of "n" is out of range. It must be a non-negative number. Received ' + n + '.');
-  }
+EventEmitter.prototype.setMaxListeners = function (n) {
+  if (!isNumber(n) || n < 0 || isNaN(n)) throw TypeError('n must be a positive number');
   this._maxListeners = n;
   return this;
 };
 
-function $getMaxListeners(that) {
-  if (that._maxListeners === undefined) return EventEmitter.defaultMaxListeners;
-  return that._maxListeners;
-}
+EventEmitter.prototype.emit = function (type) {
+  var er, handler, len, args, i, listeners;
 
-EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
-  return $getMaxListeners(this);
-};
-
-EventEmitter.prototype.emit = function emit(type) {
-  var args = [];
-  for (var i = 1; i < arguments.length; i++) {
-    args.push(arguments[i]);
-  }var doError = type === 'error';
-
-  var events = this._events;
-  if (events !== undefined) doError = doError && events.error === undefined;else if (!doError) return false;
+  if (!this._events) this._events = {};
 
   // If there is no 'error' event listener then throw.
-  if (doError) {
-    var er;
-    if (args.length > 0) er = args[0];
-    if (er instanceof Error) {
-      // Note: The comments on the `throw` lines are intentional, they show
-      // up in Node's output if this results in an unhandled exception.
-      throw er; // Unhandled 'error' event
+  if (type === 'error') {
+    if (!this._events.error || isObject(this._events.error) && !this._events.error.length) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
+      }
     }
-    // At least give some kind of context to the user
-    var err = new Error('Unhandled error.' + (er ? ' (' + er.message + ')' : ''));
-    err.context = er;
-    throw err; // Unhandled 'error' event
   }
 
-  var handler = events[type];
+  handler = this._events[type];
 
-  if (handler === undefined) return false;
+  if (isUndefined(handler)) return false;
 
-  if (typeof handler === 'function') {
-    ReflectApply(handler, this, args);
-  } else {
-    var len = handler.length;
-    var listeners = arrayClone(handler, len);
-    for (var i = 0; i < len; ++i) {
-      ReflectApply(listeners[i], this, args);
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++) {
+      listeners[i].apply(this, args);
     }
   }
 
   return true;
 };
 
-function _addListener(target, type, listener, prepend) {
+EventEmitter.prototype.addListener = function (type, listener) {
   var m;
-  var events;
-  var existing;
 
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + (typeof listener === 'undefined' ? 'undefined' : _typeof(listener)));
-  }
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
 
-  events = target._events;
-  if (events === undefined) {
-    events = target._events = Object.create(null);
-    target._eventsCount = 0;
-  } else {
-    // To avoid recursion in the case that type === "newListener"! Before
-    // adding it to the listeners, first emit "newListener".
-    if (events.newListener !== undefined) {
-      target.emit('newListener', type, listener.listener ? listener.listener : listener);
+  if (!this._events) this._events = {};
 
-      // Re-assign `events` because a newListener handler could have caused the
-      // this._events to be assigned to a new object
-      events = target._events;
-    }
-    existing = events[type];
-  }
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener) this.emit('newListener', type, isFunction(listener.listener) ? listener.listener : listener);
 
-  if (existing === undefined) {
+  if (!this._events[type])
     // Optimize the case of one listener. Don't need the extra array object.
-    existing = events[type] = listener;
-    ++target._eventsCount;
-  } else {
-    if (typeof existing === 'function') {
-      // Adding the second element, need to change to array.
-      existing = events[type] = prepend ? [listener, existing] : [existing, listener];
-      // If we've already got an array, just append.
-    } else if (prepend) {
-      existing.unshift(listener);
+    this._events[type] = listener;else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
     } else {
-      existing.push(listener);
+      m = EventEmitter.defaultMaxListeners;
     }
 
-    // Check for listener leak
-    m = $getMaxListeners(target);
-    if (m > 0 && existing.length > m && !existing.warned) {
-      existing.warned = true;
-      // No error code for this since it is a Warning
-      // eslint-disable-next-line no-restricted-syntax
-      var w = new Error('Possible EventEmitter memory leak detected. ' + existing.length + ' ' + String(type) + ' listeners ' + 'added. Use emitter.setMaxListeners() to ' + 'increase limit');
-      w.name = 'MaxListenersExceededWarning';
-      w.emitter = target;
-      w.type = type;
-      w.count = existing.length;
-      ProcessEmitWarning(w);
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' + 'leak detected. %d listeners added. ' + 'Use emitter.setMaxListeners() to increase limit.', this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
     }
   }
 
-  return target;
-}
-
-EventEmitter.prototype.addListener = function addListener(type, listener) {
-  return _addListener(this, type, listener, false);
+  return this;
 };
 
 EventEmitter.prototype.on = EventEmitter.prototype.addListener;
 
-EventEmitter.prototype.prependListener = function prependListener(type, listener) {
-  return _addListener(this, type, listener, true);
-};
+EventEmitter.prototype.once = function (type, listener) {
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
 
-function onceWrapper() {
-  var args = [];
-  for (var i = 0; i < arguments.length; i++) {
-    args.push(arguments[i]);
-  }if (!this.fired) {
-    this.target.removeListener(this.type, this.wrapFn);
-    this.fired = true;
-    ReflectApply(this.listener, this.target, args);
-  }
-}
+  var fired = false;
 
-function _onceWrap(target, type, listener) {
-  var state = { fired: false, wrapFn: undefined, target: target, type: type, listener: listener };
-  var wrapped = onceWrapper.bind(state);
-  wrapped.listener = listener;
-  state.wrapFn = wrapped;
-  return wrapped;
-}
+  function g() {
+    this.removeListener(type, g);
 
-EventEmitter.prototype.once = function once(type, listener) {
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + (typeof listener === 'undefined' ? 'undefined' : _typeof(listener)));
-  }
-  this.on(type, _onceWrap(this, type, listener));
-  return this;
-};
-
-EventEmitter.prototype.prependOnceListener = function prependOnceListener(type, listener) {
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + (typeof listener === 'undefined' ? 'undefined' : _typeof(listener)));
-  }
-  this.prependListener(type, _onceWrap(this, type, listener));
-  return this;
-};
-
-// Emits a 'removeListener' event if and only if the listener was removed.
-EventEmitter.prototype.removeListener = function removeListener(type, listener) {
-  var list, events, position, i, originalListener;
-
-  if (typeof listener !== 'function') {
-    throw new TypeError('The "listener" argument must be of type Function. Received type ' + (typeof listener === 'undefined' ? 'undefined' : _typeof(listener)));
-  }
-
-  events = this._events;
-  if (events === undefined) return this;
-
-  list = events[type];
-  if (list === undefined) return this;
-
-  if (list === listener || list.listener === listener) {
-    if (--this._eventsCount === 0) this._events = Object.create(null);else {
-      delete events[type];
-      if (events.removeListener) this.emit('removeListener', type, list.listener || listener);
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
     }
-  } else if (typeof list !== 'function') {
-    position = -1;
+  }
 
-    for (i = list.length - 1; i >= 0; i--) {
-      if (list[i] === listener || list[i].listener === listener) {
-        originalListener = list[i].listener;
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function (type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener)) throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type]) return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener || isFunction(list.listener) && list.listener === listener) {
+    delete this._events[type];
+    if (this._events.removeListener) this.emit('removeListener', type, listener);
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener || list[i].listener && list[i].listener === listener) {
         position = i;
         break;
       }
@@ -380,135 +283,89 @@ EventEmitter.prototype.removeListener = function removeListener(type, listener) 
 
     if (position < 0) return this;
 
-    if (position === 0) list.shift();else {
-      spliceOne(list, position);
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
     }
 
-    if (list.length === 1) events[type] = list[0];
-
-    if (events.removeListener !== undefined) this.emit('removeListener', type, originalListener || listener);
+    if (this._events.removeListener) this.emit('removeListener', type, listener);
   }
 
   return this;
 };
 
-EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
+EventEmitter.prototype.removeAllListeners = function (type) {
+  var key, listeners;
 
-EventEmitter.prototype.removeAllListeners = function removeAllListeners(type) {
-  var listeners, events, i;
-
-  events = this._events;
-  if (events === undefined) return this;
+  if (!this._events) return this;
 
   // not listening for removeListener, no need to emit
-  if (events.removeListener === undefined) {
-    if (arguments.length === 0) {
-      this._events = Object.create(null);
-      this._eventsCount = 0;
-    } else if (events[type] !== undefined) {
-      if (--this._eventsCount === 0) this._events = Object.create(null);else delete events[type];
-    }
+  if (!this._events.removeListener) {
+    if (arguments.length === 0) this._events = {};else if (this._events[type]) delete this._events[type];
     return this;
   }
 
   // emit removeListener for all listeners on all events
   if (arguments.length === 0) {
-    var keys = Object.keys(events);
-    var key;
-    for (i = 0; i < keys.length; ++i) {
-      key = keys[i];
+    for (key in this._events) {
       if (key === 'removeListener') continue;
       this.removeAllListeners(key);
     }
     this.removeAllListeners('removeListener');
-    this._events = Object.create(null);
-    this._eventsCount = 0;
+    this._events = {};
     return this;
   }
 
-  listeners = events[type];
+  listeners = this._events[type];
 
-  if (typeof listeners === 'function') {
+  if (isFunction(listeners)) {
     this.removeListener(type, listeners);
-  } else if (listeners !== undefined) {
+  } else if (listeners) {
     // LIFO order
-    for (i = listeners.length - 1; i >= 0; i--) {
-      this.removeListener(type, listeners[i]);
+    while (listeners.length) {
+      this.removeListener(type, listeners[listeners.length - 1]);
     }
   }
+  delete this._events[type];
 
   return this;
 };
 
-function _listeners(target, type, unwrap) {
-  var events = target._events;
-
-  if (events === undefined) return [];
-
-  var evlistener = events[type];
-  if (evlistener === undefined) return [];
-
-  if (typeof evlistener === 'function') return unwrap ? [evlistener.listener || evlistener] : [evlistener];
-
-  return unwrap ? unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
-}
-
-EventEmitter.prototype.listeners = function listeners(type) {
-  return _listeners(this, type, true);
+EventEmitter.prototype.listeners = function (type) {
+  var ret;
+  if (!this._events || !this._events[type]) ret = [];else if (isFunction(this._events[type])) ret = [this._events[type]];else ret = this._events[type].slice();
+  return ret;
 };
 
-EventEmitter.prototype.rawListeners = function rawListeners(type) {
-  return _listeners(this, type, false);
+EventEmitter.prototype.listenerCount = function (type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener)) return 1;else if (evlistener) return evlistener.length;
+  }
+  return 0;
 };
 
 EventEmitter.listenerCount = function (emitter, type) {
-  if (typeof emitter.listenerCount === 'function') {
-    return emitter.listenerCount(type);
-  } else {
-    return listenerCount.call(emitter, type);
-  }
+  return emitter.listenerCount(type);
 };
 
-EventEmitter.prototype.listenerCount = listenerCount;
-function listenerCount(type) {
-  var events = this._events;
-
-  if (events !== undefined) {
-    var evlistener = events[type];
-
-    if (typeof evlistener === 'function') {
-      return 1;
-    } else if (evlistener !== undefined) {
-      return evlistener.length;
-    }
-  }
-
-  return 0;
+function isFunction(arg) {
+  return typeof arg === 'function';
 }
 
-EventEmitter.prototype.eventNames = function eventNames() {
-  return this._eventsCount > 0 ? ReflectOwnKeys(this._events) : [];
-};
-
-function arrayClone(arr, n) {
-  var copy = new Array(n);
-  for (var i = 0; i < n; ++i) {
-    copy[i] = arr[i];
-  }return copy;
+function isNumber(arg) {
+  return typeof arg === 'number';
 }
 
-function spliceOne(list, index) {
-  for (; index + 1 < list.length; index++) {
-    list[index] = list[index + 1];
-  }list.pop();
+function isObject(arg) {
+  return (typeof arg === 'undefined' ? 'undefined' : _typeof(arg)) === 'object' && arg !== null;
 }
 
-function unwrapListeners(arr) {
-  var ret = new Array(arr.length);
-  for (var i = 0; i < ret.length; ++i) {
-    ret[i] = arr[i].listener || arr[i];
-  }
-  return ret;
+function isUndefined(arg) {
+  return arg === void 0;
 }
 
 /***/ }),
@@ -526,52 +383,41 @@ function unwrapListeners(arr) {
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+exports.REF_MAP = undefined;
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _events = __webpack_require__(/*! events */ "./node_modules/node-libs-browser/node_modules/events/events.js");
+
+var _events2 = _interopRequireDefault(_events);
+
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/*
-  Componente LandMap encargado de mostrar las parcelas 
-  y la navegación entre ellas
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-  Las parcelas se representan en un objeto así:
-  ABC
-  DEF
-  GHI
-
-  Cuando hay movimientos se calcula lat,lon para cada
-  una de las posiciones del objeto.
-
-*/
-
-//immutable point structure
-var Point = function () {
-	function Point() {
-		var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
-		var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-
-		_classCallCheck(this, Point);
-
-		this.x = x;
-		this.y = y;
-	}
-
-	_createClass(Point, [{
-		key: "add",
-		value: function add(_ref) {
-			var x = _ref.x,
-			    y = _ref.y;
-
-			return new Point(this.x + x, this.y + y);
-		}
-	}]);
-
-	return Point;
-}();
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /*
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Componente LandMap encargado de mostrar las parcelas 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 y la navegación entre ellas
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Las parcelas se representan en un objeto así:
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ABC
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 DEF
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 GHI
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Cuando hay movimientos se calcula lat,lon para cada
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 una de las posiciones del objeto.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               */
 
 var defaultOpts = {
-	parcelLength: 200
+	parcelLength: 200,
+	offset: new _utils.Point(0, 0)
 
 	//relations between parcels (useful to recalculate)
 };var REF_MAP = {
@@ -586,15 +432,19 @@ var defaultOpts = {
 	I: { lat: 1, lon: 1 }
 };
 
-var LandMap = function () {
+var LandMap = function (_EventEmitter) {
+	_inherits(LandMap, _EventEmitter);
+
 	function LandMap() {
 		var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultOpts;
 
 		_classCallCheck(this, LandMap);
 
-		this.parcelLength = opts.parcelLength;
+		var _this = _possibleConstructorReturn(this, (LandMap.__proto__ || Object.getPrototypeOf(LandMap)).call(this));
+
+		_this.parcelLength = opts.parcelLength;
 		//Active parcels
-		this.parcelMap = {
+		_this.parcelMap = {
 			A: { lat: -1, lon: -1 },
 			B: { lat: 0, lon: -1 },
 			C: { lat: 1, lon: -1 },
@@ -605,51 +455,83 @@ var LandMap = function () {
 			H: { lat: 0, lon: 1 },
 			I: { lat: 1, lon: 1 }
 		};
-		this.offset = new Point(0, 0);
+		_this.offset = opts.offset;
+		return _this;
 	}
 
 	_createClass(LandMap, [{
-		key: "getActiveParcels",
+		key: 'getActiveParcels',
 		value: function getActiveParcels() {
 			return this.parcelMap;
 		}
 	}, {
-		key: "move",
-		value: function move(_ref2) {
-			var x = _ref2.x,
-			    y = _ref2.y;
+		key: 'move',
+		value: function move(_ref) {
+			var _ref$x = _ref.x,
+			    x = _ref$x === undefined ? 0 : _ref$x,
+			    _ref$y = _ref.y,
+			    y = _ref$y === undefined ? 0 : _ref$y;
 
 			this.offset = this.offset.add({ x: x, y: y });
+			this.emit('offsetchanged', this.offset);
 			this.recalculatePosition(this.offset);
 		}
+
+		//Returns 2 points (top,left) and (bottom,right)
+		//encompassing the total area (the 9 parcels)
+
 	}, {
-		key: "recalculatePosition",
+		key: 'getArea',
+		value: function getArea() {
+			var from = {
+				x: this.parcelMap['A'].lat,
+				y: this.parcelMap['A'].lon
+			};
+
+			var to = {
+				x: this.parcelMap['I'].lat + 1,
+				y: this.parcelMap['I'].lon + 1
+			};
+			return [new _utils.Point(from.x, from.y), new _utils.Point(to.x, to.y)];
+		}
+	}, {
+		key: 'recalculatePosition',
 		value: function recalculatePosition(offset) {
 
 			var nextLat = Math.floor(offset.x / (this.parcelLength - 1));
 			var nextLon = Math.floor(offset.y / (this.parcelLength - 1));
-			var newOffset = { x: offset.x % this.parcelLength, y: offset.y % this.parcelLength
-				//calculate the new map
-			};var newParcelMap = {};
+			//calculate the new map
+			var newParcelMap = {};
 			//Use the reference map to calculate the lat, lon
 			//based on the value of E (the center parcel)
 			var centerParcel = {
 				lat: nextLat,
 				lon: nextLon
-			};
+
+				//save the previous values of 'A' to detect if
+				//the map changed
+			};var prevStart = _extends({}, this.parcelMap['A']);
+
 			Object.keys(this.parcelMap).forEach(function (id) {
 				newParcelMap[id] = {
 					lat: centerParcel.lat + REF_MAP[id].lat,
 					lon: centerParcel.lon + REF_MAP[id].lon
 				};
 			});
-			this.parcelMap = newParcelMap;
-			this.offset = newOffset;
+
+			var newStart = _extends({}, newParcelMap['A']);
+			if (prevStart.lat != newStart.lat || prevStart.lon != newStart.lon) {
+				//the start parcel 'A' changed, so all the map changed
+				this.parcelMap = newParcelMap;
+				//the area to monitor changed
+				var newArea = this.getArea();
+				this.emit('areachanged', newArea[0], newArea[1]);
+			}
 		}
 	}]);
 
 	return LandMap;
-}();
+}(_events2.default);
 
 exports.REF_MAP = REF_MAP;
 exports.default = LandMap;
@@ -680,6 +562,8 @@ var _domUtils = __webpack_require__(/*! ./domUtils */ "./src/domUtils.js");
 
 var domUtils = _interopRequireWildcard(_domUtils);
 
+var _utils = __webpack_require__(/*! ./utils */ "./src/utils.js");
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -691,6 +575,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  mostrar las parcelas
 **/
 
+//TODO: format, change tabs to spaces
+
 var defaultOpts = {
 	containerElement: 'body',
 	itemRenderer: null,
@@ -699,7 +585,7 @@ var defaultOpts = {
 
 	//TODO: add base css here
 
-};var css = '\n\n\t.content-container {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t\ttransition: transform 0.3s;\n\t}\n\n\t.parcel-container {\n\t\tposition: absolute;\n\t\ttop:0;\n\t\tleft: 0;\n\t\tbackground: darkgrey;\n\t\tbox-sizing: border-box;\n\t\tborder: solid 1px white;\n\t}\n';
+};var css = '\n\n\t.content-container {\n\t\tposition: absolute;\n\t\ttop: 0;\n\t\tleft: 0;\n\t\toverflow: hidden;\n\t\twidth: 100%;\n\t\theight: 100%;\n\t}\n\n\t.item {\n\t    position: absolute;\n\t    top: 0;\n\t    left: 0;\n\t}\n';
 
 domUtils.injectCSS(css);
 
@@ -709,15 +595,19 @@ var MapView = function () {
 
 		opts = Object.assign({}, defaultOpts, opts);
 		this.opts = opts;
+		this.offset = opts.offset || new _utils.Point(0, 0);
 		this.dataProvider = opts.dataProvider;
 		this.container = typeof opts.containerElement === 'string' ? document.querySelector(opts.containerElement) : opts.containerElement;
 
 		this.map = new _LandMap2.default({
-			parcelLength: opts.parcelLength
+			parcelLength: opts.parcelLength,
+			offset: this.offset
 		});
 		this.initDOM();
 		this.attachEvents();
-		this.updateMap;
+		//Start monitoring the initial map areachanged
+		var initialArea = this.map.getArea();
+		this.dataProvider.monitorArea(initialArea[0], initialArea[1]);
 	}
 
 	_createClass(MapView, [{
@@ -725,7 +615,7 @@ var MapView = function () {
 		value: function initDOM() {
 			//Create contentContainer
 			this.contentContainer = this.createContentContainer();
-			this.createParcelContainers(this.contentContainer);
+			//this.createParcelContainers(this.contentContainer);
 		}
 	}, {
 		key: 'createContentContainer',
@@ -759,33 +649,74 @@ var MapView = function () {
 	}, {
 		key: 'attachEvents',
 		value: function attachEvents() {
+			this.monitorMapOffset();
 			this.connectToDataProvider();
 			this.addKeyboardEvents();
 			this.addMouseEvents();
 		}
 	}, {
+		key: 'monitorMapOffset',
+		value: function monitorMapOffset() {
+			var _this = this;
+
+			this.map.on('offsetchanged', function (offset) {
+				//map was moved
+				_this.offset = offset;
+				//update transform attribute so they move
+				_this.updateElementPositions(offset);
+			});
+
+			//when the area to monitor changes
+			//receives the newArea [P1,P2] where
+			//P1 is the top left point (lat,lon)
+			//and P2 is the bottom right point
+			this.map.on('areachanged', function (startPoint, endPoint) {
+				//When current parcel changes (and their surroundings)
+				//TODO: call monitorarea (dataprovider)
+				console.log('parcel map changed');
+				_this.dataProvider.monitorArea(startPoint, endPoint);
+			});
+		}
+	}, {
+		key: 'updateElementPositions',
+		value: function updateElementPositions(offset) {
+			var _this2 = this;
+
+			//upate dom elements transform attribute
+			var elems = Array.from(this.contentContainer.querySelectorAll('.item'));
+			elems.forEach(function (elem) {
+				var pos = _this2.getItemPosition(Number(elem.dataset.lat), Number(elem.dataset.lon), offset);
+				elem.style.transform = 'translate(' + pos.x + 'px,' + pos.y + 'px)';
+			});
+		}
+	}, {
 		key: 'connectToDataProvider',
 		value: function connectToDataProvider() {
-			var _this = this;
+			var _this3 = this;
 
 			this.dataProvider.on('item', function (item) {
 				console.log('item received,', item);
-				var itemElem = _this.createItemElement(item);
+				var itemElem = _this3.createItemElement(item);
+				itemElem.classList.add('item');
+				itemElem.dataset.lat = item.lat;
+				itemElem.dataset.lon = item.lon;
+
 				//todo: add to a itemcontainr layer
-				_this.contentContainer.appendChild(itemElem);
+				_this3.contentContainer.appendChild(itemElem);
 				//set position
-				var pos = _this.getItemPosition(itemElem);
+				var pos = _this3.getItemPosition(item.lat, item.lon, _this3.offset);
+				console.log('item pos', pos);
 				itemElem.style.transform = 'translate(' + pos.x + 'px,' + pos.y + 'px)';
 			});
 		}
 	}, {
 		key: 'getItemPosition',
-		value: function getItemPosition(item) {
+		value: function getItemPosition(lat, lon, offset) {
 			//calculate item the pixel position
-
+			//TODO: don't access parcelMap directly
 			return {
-				x: (item.lat - this.map['A'].lat) * this.opts.parcelLength,
-				y: (item.lon - this.map['A'].lon) * this.opts.parcelLength
+				x: (lat - this.map.parcelMap['A'].lat) * this.opts.parcelLength + offset.x,
+				y: (lon - this.map.parcelMap['A'].lon) * this.opts.parcelLength + offset.y
 			};
 		}
 	}, {
@@ -794,12 +725,36 @@ var MapView = function () {
 			//todo delegate this to item renderer
 			var elem = document.createElement('div');
 			elem.innerText = item.text;
-			elem.classList.add('item');
 			return elem;
 		}
 	}, {
 		key: 'addKeyboardEvents',
-		value: function addKeyboardEvents() {}
+		value: function addKeyboardEvents() {
+			var _this4 = this;
+
+			document.addEventListener('keyup', function (ev) {
+				var allowed = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+				if (allowed.indexOf(ev.key) >= 0) {
+					switch (ev.key) {
+						case "ArrowDown":
+							_this4.map.move({ y: 100 });
+							break;
+						case "ArrowLeft":
+							_this4.map.move({ x: -100 });
+
+							break;
+						case "ArrowRight":
+							_this4.map.move({ x: 100 });
+							break;
+						case "ArrowUp":
+							_this4.map.move({ y: -100 });
+							break;
+						default:
+							break;
+					}
+				}
+			});
+		}
 	}, {
 		key: 'addMouseEvents',
 		value: function addMouseEvents() {}
@@ -828,7 +783,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _events = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+var _events = __webpack_require__(/*! events */ "./node_modules/node-libs-browser/node_modules/events/events.js");
 
 var _events2 = _interopRequireDefault(_events);
 
@@ -846,21 +801,19 @@ var TestDataProvider = function (_EventEmitter) {
 	function TestDataProvider() {
 		_classCallCheck(this, TestDataProvider);
 
-		return _possibleConstructorReturn(this, (TestDataProvider.__proto__ || Object.getPrototypeOf(TestDataProvider)).apply(this, arguments));
+		return _possibleConstructorReturn(this, (TestDataProvider.__proto__ || Object.getPrototypeOf(TestDataProvider)).call(this));
 	}
 
 	_createClass(TestDataProvider, [{
 		key: 'monitorArea',
 		value: function monitorArea(from, to) {
-			var _this2 = this;
-
-			setInterval(function () {
-				_this2.emit('item', {
-					id: Math.random() * 100,
-					text: 'Some text',
-					lat: Math.random() * (to.lat - from.lat) + from.lat,
-					lon: Math.random() * (to.lon - from.lon) + from.lon
-				});
+			var lat = 0;
+			var lon = 0;
+			this.emit('item', {
+				id: Math.random() * 100,
+				text: 'Some text' + Math.random() * 2000,
+				lat: lat,
+				lon: lon
 			});
 		}
 	}]);
@@ -918,8 +871,53 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 //this should render the parcels
 new _MapView2.default({
 	dataProvider: new _TestRandomDataProvider2.default(),
-	parcelLength: 200
+	parcelLength: 400
 });
+
+/***/ }),
+
+/***/ "./src/utils.js":
+/*!**********************!*\
+  !*** ./src/utils.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+//immutable point structure
+var Point = exports.Point = function () {
+	function Point() {
+		var x = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+		var y = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+		_classCallCheck(this, Point);
+
+		this.x = x;
+		this.y = y;
+	}
+
+	_createClass(Point, [{
+		key: "add",
+		value: function add(_ref) {
+			var x = _ref.x,
+			    y = _ref.y;
+
+			return new Point(this.x + x, this.y + y);
+		}
+	}]);
+
+	return Point;
+}();
 
 /***/ })
 
